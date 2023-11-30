@@ -1,3 +1,10 @@
+function sameOrigin(a, b) {
+    // https://stackoverflow.com/questions/31374766/javascript-how-to-check-if-a-url-is-same-origin-as-current-page
+    const urlA = new URL(a);
+    const urlB = new URL(b);
+    return urlA.origin === urlB.origin;
+}
+
 var route = new function() {
     this.session_id = null;
     this.curr_url = null;
@@ -67,10 +74,13 @@ var route = new function() {
                     }
 
                     routerView.find('a').each((_, element) => {
-                        $(element).on('click', (event) => {
-                            event.preventDefault();
-                            history.pushState(null, '', $(element).attr('href'))
-                            PoPState()
+                        let j_element = $(element);
+                        j_element.on('click', (event) => {
+                            if (sameOrigin(j_element.attr('href'), location.href)) {
+                                event.preventDefault();
+                                history.pushState(null, '', j_element.attr('href'))
+                                PoPState()
+                            }
                         })
                     })
                 });
