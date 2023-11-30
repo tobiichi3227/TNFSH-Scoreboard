@@ -74,7 +74,7 @@ class Server:
 
     def sig_handler(self, sig, _):
         utils.logger.info(f"Caught signal: {sig}")
-        tornado.ioloop.IOLoop.current().add_callback(self.server_shutdown)
+        tornado.ioloop.IOLoop.current().add_callback_from_signal(self.server_shutdown)
 
 
 if __name__ == "__main__":
