@@ -1,0 +1,118 @@
+<script>
+    function change_validate_code() {
+        $.get("/board/be/validate", res => {
+            res = JSON.parse(res);
+            $("#validatePic").attr("src", res.picture);
+            $("#validatePic").attr("src_str", res.src);
+        });
+    }
+
+    function init() {
+        change_validate_code();
+
+        $("#changeValidateCode").on("click", event => {
+            change_validate_code();
+        });
+
+        $("button.submit").on("click", (event) => {
+            let form = $("form#loginForm");
+            let flag = false;
+            form.find(".needs-validation").each(function(i, element) {
+                if (!element.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    flag = true;
+                }
+
+                element.classList.add("was-validated");
+            });
+
+            if (flag) {
+                form.addClass("was-validated");
+                return;
+            }
+
+            let mail = form.find("#InputEmail").val();
+            let password = form.find("#InputPassword").val();
+            let validate_code = form.find("#InputValidate").val();
+            let validate_src = form.find("#validatePic").attr("src_str");
+
+            $.post(
+                "/board/be/login",
+                {
+                    reqtype: "login",
+                    username: mail,
+                    password: password,
+                    validate_src: validate_src,
+                    validate_code: validate_code,
+                },
+                res => {
+                    if (res[0] === "E") {
+                        change_validate_code();
+                        let print = form.find("#print");
+                        let wrapper = document.createElement("div");
+                        wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 帳號或密碼或驗證碼錯誤 </div>`;
+
+                        print.append(wrapper);
+                        setTimeout(() => {
+                            print.html("");
+                        }, 1000);
+                        form.removeClass("was-validated");
+                    } else {
+                        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                            route.go("/board/exam");
+                            return;
+                        }
+
+                        if (route.prev_url == null) {
+                            location.href = "/board/info/";
+                        } else {
+                            location.href = route.prev_url;
+                        }
+
+                    }
+                }
+            );
+        });
+    }
+</script>
+<style>
+    h3 {
+        text-align: center;
+    }
+
+    div.mb-3 {
+        text-align: center;
+    }
+
+    button.submit {
+        position: relative;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+</style>
+
+<div class="row row-cols-1 row-cols-lg-3 justify-content-center align-content-center" style="height: 100%;">
+    <div id="login" class="col mt-1">
+        <form id="loginForm" style="padding-top: 25%;">
+            <h3>登入</h3>
+            <div class="mb-4">
+                <input type="text" id="InputEmail" class="form-control needs-validation" placeholder="Account" required/>
+                <div class="invalid-feedback">請輸入Email</div>
+            </div>
+            <div class="mb-4">
+                <input type="password" id="InputPassword" class="form-control needs-validation" placeholder="Password" required/>
+                <div class="invalid-feedback">請輸入密碼</div>
+            </div>
+            <div class="mb-4">
+                <input type="text" id="InputValidate" class="form-control needs-validation" placeholder="Validate Code" style="width: 75%;" required/>
+                <div class="invalid-feedback">請輸入驗證碼</div>
+                <img id="validatePic" alt="" src_src="" src="">
+            </div>
+            <div class="mb-5 mb-lg-3" id="print"></div>
+            <button type="button" class="btn btn-primary my-3 submit" tabindex="8">
+                Login
+            </button>
+        </form>
+    </div>
+</div>

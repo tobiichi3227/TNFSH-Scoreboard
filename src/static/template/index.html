@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            crossorigin="anonymous"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+
+    <script src="/board/src/route.js"></script>
+    <meta charset="UTF-8"/>
+
+    <title>TNFSH-Scoreboard</title>
+
+    <script id="indexjs" session_id="{{ session.session_id }}">
+        $(document).ready(() => {
+            route.init();
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && route.session_id === null) {
+                route.go("/board/login");
+            }
+        });
+    </script>
+</head>
+
+<!--
+海に生き，海を守り，海を行く，それがブルーマーメード
+-->
+
+<style>
+/*
+    以下內容來自
+    https://www.minwt.com/webdesign-dev/html/17114.html
+*/
+
+@media screen and (max-width: 768px) {
+    .side-collapse-container-left {
+        position: relative;
+        left: 0;
+        transition:left .4s;
+    }
+
+    .side-collapse-container-left.out {
+        display: none;
+    }
+
+    .side-collapse-left {
+        position: fixed;
+        overflow: hidden;
+        transition: width .4s;
+    }
+
+    .side-collapse-left.in {
+        display: none;
+    }
+}
+
+</style>
+
+<script>
+    $(function() {
+        var sideslider = $('[data-bs-toggle=collapse]');
+        var get_sidebar = sideslider.attr('data-target-sidebar');
+        var get_content = sideslider.attr('data-target-content');
+        sideslider.click(event => {
+            $(get_sidebar).toggleClass('in');
+            $(get_content).toggleClass('out');
+        });
+
+        $(".nav-link").each(function(i, element) {
+            $(element).on("click", event => {
+                if (!$(get_sidebar).hasClass('in')) {
+                    $(get_sidebar).toggleClass('in');
+                    $(get_content).toggleClass('out');
+                }
+            })
+        });
+    });
+</script>
+
+<body>
+<nav
+        class="navbar navbar-expand-lg navbar-light bg-dark"
+        style="--bs-bg-opacity: 0.8"
+>
+    <div class="container-fluid">
+        <button
+                aria-controls="navbarSupportedContent"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+                class="navbar-toggler"
+                data-bs-target=""
+                data-bs-toggle="collapse"
+                data-target-sidebar=".side-collapse-left"
+                data-target-content=".side-collapse-container-left"
+                type="button"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <a class="navbar-brand" style="margin-right: 30% !important;" href="/board/info/">TNFSH-Scoreboard</a>
+        
+        <!-- <a class="nav-item" href="https://github.com/tobiichi3227/" target="_blank">
+            <img alt="" width="30" height="24" src="https://github.githubassets.com/assets/GitHub-Mark-ea2971cee799.png">
+        </a> -->
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="my-2 col-lg-2 main-navbar side-collapse-left in">
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item exam">
+                    <a class="nav-link" aria-current="page" href="/board/exam/">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path></svg>
+                        <span>段考成績</span>
+                    </a>
+                </li>
+
+                <li class="nav-item about">
+                    <a class="nav-link" aria-current="page" href="/board/about/">
+                        <svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24" height="24" viewBox="0 0 50 50">
+                            <path d="M 25 2 C 12.309295 2 2 12.309295 2 25 C 2 37.690705 12.309295 48 25 48 C 37.690705 48 48 37.690705 48 25 C 48 12.309295 37.690705 2 25 2 z M 25 4 C 36.609824 4 46 13.390176 46 25 C 46 36.609824 36.609824 46 25 46 C 13.390176 46 4 36.609824 4 25 C 4 13.390176 13.390176 4 25 4 z M 25 11 A 3 3 0 0 0 22 14 A 3 3 0 0 0 25 17 A 3 3 0 0 0 28 14 A 3 3 0 0 0 25 11 z M 21 21 L 21 23 L 22 23 L 23 23 L 23 36 L 22 36 L 21 36 L 21 38 L 22 38 L 23 38 L 27 38 L 28 38 L 29 38 L 29 36 L 28 36 L 27 36 L 27 21 L 26 21 L 22 21 L 21 21 z"></path>
+                        </svg>
+                        <span>關於</span>
+                    </a>
+                </li>
+            </ul>
+            <ul class="nav nav-pills flex-column">
+                <li class="nav-item">
+                    {% if session.student_name != "" %}
+                    <a class="nav-link">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><circle cx="12" cy="7" r="4"></circle><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path></svg>
+                        <span>{{ session.student_name }}</span>
+                    </a>
+                    {% end %}
+                </li>
+                <li class="nav-item login">
+                    <a
+                            class="nav-link login"
+                            href="/board/login/"
+                            style="display: none"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"></path><path d="M7 12h14l-3 -3m0 6l3 -3"></path></svg>
+                        <span>登入</span>
+                    </a>
+
+                    <a
+                        class="nav-link logout"
+                        href="/board/info/"
+                        style="display: none"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"></path><path d="M7 12h14l-3 -3m0 6l3 -3"></path></svg>
+                        <span>登出</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="col-12 col-lg-10 side-collapse-container-left" id="routerView" style="background-color: rgb(248, 249, 250);"></div>
+    </div>
+</div>
+
+<div style="position: fixed; right: 15px; bottom: 5px;">
+    <span class="text-muted">Developed by tobiichi3227</span>
+</div>
+
+<script
+        crossorigin="anonymous"
+        src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+></script>
+</body>
+</html>
