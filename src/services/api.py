@@ -1,12 +1,14 @@
 import json
 import base64
-import requests
-from typing import List, Dict
+
+import orjson
 
 import const
+from utils.error import ReturnType, Success, RemoteServerError
+from services.service import client_session
 
 
-def get_student_info(session_key: str) -> Dict[str, str]:
+async def get_student_info(session_key: str) -> ReturnType:
     """
     Get student info from index page
     <div style="display: none;" id="userInfo">Base64 encoded string</div>
@@ -19,19 +21,23 @@ def get_student_info(session_key: str) -> Dict[str, str]:
         "session_key": session_key
     }
 
-    res = requests.post(const.INDEX_URL, data=data, timeout=20)
+    async with client_session.post(const.INDEX_URL, data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
 
-    i = res.text.find("id=\"userInfo\">") + 14
-    j = res.text.find("<", i)
+        res = await resp.text()
 
-    tmp = json.loads(base64.b64decode(res.text[i:j]).decode('utf-8'))
-    return {
+    i = res.find("id=\"userInfo\">") + 14
+    j = res.find("<", i)
+
+    tmp = orjson.loads(base64.b64decode(res[i:j]).decode('utf-8'))
+    return Success, {
         "studentId": tmp["childId"],
         "name": tmp["name"]
     }
 
 
-def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Dict:
+async def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> ReturnType:
     """
     Get specific exam statistics data such as rank, score sum of all subjects, score average.
     If the statistics info has not been published, data will be empty.
@@ -48,12 +54,15 @@ def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Dict:
         "stdSemeId": std_seme_id,
     }
 
-    res = requests.post(f"{const.MAIN_URL}/A0410S_ItemScoreStat_select.action", data=data, timeout=20)
-    res = json.loads(res.text)
+    async with client_session.post(f"{const.MAIN_URL}/A0410S_ItemScoreStat_select.action", data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json(loads=orjson.loads)
 
     # stats not publish
     if len(res["dataRows"]) == 0:
-        return {
+        return Success, {
             "class_rank": "",
             "class_cnt": "",
             "group_rank": "",
@@ -65,7 +74,7 @@ def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Dict:
         }
 
     r = res["dataRows"][0]
-    return {
+    return Success, {
         "class_rank": r.get("orderC", ""),
         "class_cnt": r.get("pnmC", ""),
         "group_rank": r.get("orderS", ""),
@@ -77,7 +86,7 @@ def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Dict:
     }
 
 
-def a0410S_StdSemeView_select(session_key: str, std_id: str) -> list[dict]:
+async def a0410S_StdSemeView_select(session_key: str, std_id: str) -> ReturnType:
     """
 
 
@@ -92,9 +101,13 @@ def a0410S_StdSemeView_select(session_key: str, std_id: str) -> list[dict]:
         "statusM": 15,
     }
 
-    res = requests.post(f"{const.MAIN_URL}/A0410S_StdSemeView_select.action", data=data, timeout=20)
-    res = json.loads(res.text)
-    return [{
+    async with client_session.post(f"{const.MAIN_URL}/A0410S_StdSemeView_select.action", data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json(loads=orjson.loads)
+
+    return Success, [{
         "stdSemeId": obj["id"],
         "syear": obj["syear"],
         "seme": obj["seme"],
@@ -102,7 +115,7 @@ def a0410S_StdSemeView_select(session_key: str, std_id: str) -> list[dict]:
     } for obj in res["dataRows"]]
 
 
-def get_school_year_data(session_key: str, year: int = None, seme: int = None) -> List[Dict]:
+async def get_school_year_data(session_key: str, year: int = None, seme: int = None) -> ReturnType:
     """
     Get school year data
     If year and seme is null, you will get all year data
@@ -123,9 +136,13 @@ def get_school_year_data(session_key: str, year: int = None, seme: int = None) -
     if seme:
         data["seme"] = seme
 
-    res = requests.post(f"{const.MAIN_URL}/A0410S_Item_select.action", data=data, timeout=20)
-    res = json.loads(res.text)
-    return [{
+    async with client_session.post(f"{const.MAIN_URL}/A0410S_Item_select.action", data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json(loads=orjson.loads)
+
+    return Success, [{
         "itemId": obj["id"],
         "year": obj["syear"],
         "semester": obj["seme"],
@@ -133,7 +150,7 @@ def get_school_year_data(session_key: str, year: int = None, seme: int = None) -
     } for obj in res["dataRows"]]
 
 
-def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: str) -> List[Dict]:
+async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: str) -> ReturnType:
     """
     Get single exam scores data
     Have subject name, exam name, subject score, class average for subject
@@ -151,8 +168,11 @@ def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: str) -> 
         "stdSemeId": std_seme_id,
     }
 
-    res = requests.post(f"{const.MAIN_URL}/A0410S_OpenItemScoreView_selectA0410s.action", data=data, timeout=20)
-    res = json.loads(res.text)
+    async with client_session.post(f"{const.MAIN_URL}/A0410S_OpenItemScoreView_selectA0410s.action", data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json(loads=orjson.loads)
 
     scores = [{
         "subject": score_obj["subjId"],
@@ -169,4 +189,4 @@ def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: str) -> 
         if score["class_average"] is None:
             score["class_average"] = ""
 
-    return scores
+    return Success, scores

@@ -1,13 +1,13 @@
 import json
-import requests
 
 import const
 import config
+from utils.error import Success, RemoteServerError
 from handlers.base import RequestHandler, reqenv
+from services.service import client_session
 from services.api import get_student_info
 from services.login import LoginService, LoginPayload
 from services.session import SessionService
-from utils.error import Success
 
 
 class LoginHandler(RequestHandler):
@@ -24,7 +24,7 @@ class LoginHandler(RequestHandler):
             validate_code = self.get_argument("validate_code")
             validate_src = self.get_argument("validate_src")
 
-            err, form_token = LoginService.inst.get_form_token()
+            err, form_token = await LoginService.inst.get_form_token()
             if err != Success:
                 pass
 
@@ -37,12 +37,16 @@ class LoginHandler(RequestHandler):
                 sch_no=config.SCHNO
             )
 
-            err, session_key = LoginService.inst.get_session_key(payload)
+            err, session_key = await LoginService.inst.get_session_key(payload)
             if err != Success:
                 await self.error(err)
                 return
 
-            info = get_student_info(session_key)
+            err, info = await get_student_info(session_key)
+            if err != Success:
+                await self.error(err)
+                return
+
             SessionService.inst.create_session(session_key, info["studentId"], info["name"])
             self.set_secure_cookie('session_id', session_key, path='/board', httponly=True)
             await self.success()
@@ -59,11 +63,14 @@ class LoginHandler(RequestHandler):
 
 
 class ValidateHandler(RequestHandler):
-
     async def get(self):
-        # TODO: Post Error Handle
-        res = requests.post(const.VALIDATE_URL).json()
-        await self.finish(json.dumps({
-            "picture": res["src"],
-            "src": res["validateSrc"],
-        }))
+        async with client_session.post(const.VALIDATE_URL) as resp:
+            if not resp.ok:
+                await self.error(RemoteServerError)
+                return
+
+            res = await resp.json()
+            await self.finish(json.dumps({
+                "picture": res["src"],
+                "src": res["validateSrc"],
+            }))

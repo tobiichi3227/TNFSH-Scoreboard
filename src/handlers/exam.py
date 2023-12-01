@@ -2,6 +2,7 @@ import tornado.web
 
 from handlers.base import RequestHandler, reqenv
 from services.api import get_school_year_data, a0410S_StdSemeView_select, get_single_exam_scores, get_exam_stats
+from utils.error import RemoteServerError
 
 
 class ExamHandler(RequestHandler):
@@ -22,12 +23,21 @@ class ExamHandler(RequestHandler):
             item_id = None
             std_seme_id = None
 
-        std_seme_view = a0410S_StdSemeView_select(session_id, self.session.student_id)
+        err, std_seme_view = await a0410S_StdSemeView_select(session_id, self.session.student_id)
+        if err == RemoteServerError:
+            await self.render('remote-server-error.html')
+            return
+
         item_ids = []
 
         for std in std_seme_view:
             s_id, year, seme = std["stdSemeId"], std["syear"], std["seme"]
-            for item in get_school_year_data(session_id, int(year), int(seme)):
+            err, school_year_data = await get_school_year_data(session_id, int(year), int(seme))
+            if err == RemoteServerError:
+                await self.render('remote-server-error.html')
+                return
+
+            for item in school_year_data:
                 if item["exam_name"] in ["學期成績", "平常成績"]:
                     continue
 
@@ -41,8 +51,12 @@ class ExamHandler(RequestHandler):
 
         scores, stats = None, None
         if item_id is not None and std_seme_id is not None:
-            scores = get_single_exam_scores(session_id, item_id, std_seme_id)
-            stats = get_exam_stats(session_id, item_id, std_seme_id)
+            err, scores = await get_single_exam_scores(session_id, item_id, std_seme_id)
+            err, stats = await get_exam_stats(session_id, item_id, std_seme_id)
+
+            if err == RemoteServerError:
+                await self.render('remote-server-error.html')
+                return
 
         await self.render('exam.html', item_ids=item_ids, scores=scores, stats=stats,
                           item_id=item_id, std_seme_id=std_seme_id)

@@ -22,10 +22,8 @@ class RequestHandler(tornado.web.RequestHandler):
 
         kwargs['session'] = session
 
-        if templ is not None:
-            data = self.tpldr.load(templ).generate(**kwargs)
-        else:
-            raise AssertionError("args none")
+        assert templ is not None, 'Missing templ argument'
+        data = self.tpldr.load(templ).generate(**kwargs)
 
         await self.finish(data)
 

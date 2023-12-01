@@ -85,4 +85,12 @@ class _UnknownError(_Error):
 
 UnknownError = _UnknownError
 
+
+class _RemoteServerError(_Error):
+    def __str__(self):
+        return "Eremote"
+
+
+RemoteServerError = _RemoteServerError()
+
 ReturnType = tuple[_Error, Any]

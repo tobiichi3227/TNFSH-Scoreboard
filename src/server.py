@@ -70,6 +70,9 @@ class Server:
             self.ioloop.add_timeout(now + 1, self.stop_ioloop)
         else:
             utils.logger.info("Server shutdown!")
+
+            from services.service import client_session
+            self.ioloop.run_in_executor(func=client_session.close, executor=None)
             self.ioloop.stop()
 
     def sig_handler(self, sig, _):

@@ -1,11 +1,10 @@
 from dataclasses import dataclass
-import requests
 
 from fake_useragent import UserAgent
 
 import const
-from utils.error import ReturnType
-from utils.error import Success, Error
+from services.service import client_session
+from utils.error import ReturnType, Success, RemoteServerError, Error
 
 user_agent = UserAgent()
 
@@ -34,24 +33,28 @@ class LoginService:
     def __init__(self) -> None:
         LoginService.inst: "LoginService" = self
 
-    def get_form_token(self) -> ReturnType:
+    async def get_form_token(self) -> ReturnType:
         """
         Get form token from login page
         <input type="hidden" name="formToken" value="formTokenValue">
 
         :return: form token
         """
-        # TODO: Get Error Handle
-        html = requests.get(const.LOGIN_URL, timeout=20)
+
+        async with client_session.get(const.LOGIN_URL) as resp:
+            if not resp.ok:
+                return RemoteServerError, None
+
+            html = await resp.text()
 
         # Get Form Token
-        i = html.text.find("name=\"formToken\" value=") + 24
-        j = html.text.find("\"", i)
-        form_token = html.text[i:j]
+        i = html.find("name=\"formToken\" value=") + 24
+        j = html.find("\"", i)
+        form_token = html[i:j]
 
         return Success, form_token
 
-    def get_session_key(self, login_payload: LoginPayload) -> ReturnType:
+    async def get_session_key(self, login_payload: LoginPayload) -> ReturnType:
         """
         Simulate user login action to obtain session id from redirect page.
         Use random user-agent to prevent target server block us.
@@ -61,19 +64,22 @@ class LoginService:
         :return: session_key
         """
 
-        html = requests.post(const.LOGIN_URL, data=login_payload.to_dict(), headers={
+        async with client_session.post(const.LOGIN_URL, data=login_payload.to_dict(), headers={
             "User-Agent": user_agent.random
-        }, timeout=20)
+        }) as resp:
+            if not resp.ok:
+                return RemoteServerError, None
+            html = await resp.text()
 
         # Get Session Key
-        i = html.text.find("name=\'session_key\' value=") + 26
-        j = html.text.find("\'", i)
+        i = html.find("name=\'session_key\' value=") + 26
+        j = html.find("\'", i)
 
         # The session key len must equal to 36
         if j - i != 36:
             # Wrong Password or account or validate
             return Error, None
 
-        session_key = html.text[i:j]
+        session_key = html[i:j]
 
         return Success, session_key

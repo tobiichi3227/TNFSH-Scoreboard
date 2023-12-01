@@ -1,6 +1,8 @@
-import utils
-from services.session import SessionService
-from services.login import LoginService
+import aiohttp
+
+
+timeout = aiohttp.ClientTimeout(total=20)
+client_session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=27), timeout=timeout)
 
 
 class Service:
@@ -8,6 +10,10 @@ class Service:
 
 
 def init_service():
+    import utils
+    from services.session import SessionService
+    from services.login import LoginService
+
     utils.logger.info("Service Init")
 
     Service.Session = SessionService()
