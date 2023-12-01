@@ -20,7 +20,7 @@ var route = new function() {
                 reqtype: 'logout',
                 session_id: session_id,
             }, res => {
-                location.href = '/board/info';
+                location.href = '/board/info/';
             })
         })
 
