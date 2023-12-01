@@ -26,7 +26,7 @@ def get_student_info(session_key: str) -> Dict[str, str]:
 
     tmp = json.loads(base64.b64decode(res.text[i:j]).decode('utf-8'))
     return {
-        "studentId": tmp["id"],
+        "studentId": tmp["childId"],
         "name": tmp["name"]
     }
 
