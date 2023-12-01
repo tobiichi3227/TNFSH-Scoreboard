@@ -54,6 +54,7 @@
                         if (res === "E") {
                             change_validate_code();
                             wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 帳號或密碼或驗證碼錯誤 </div>`;
+                            form.find("#InputValidate").val("");
                         } else if (res === "Eremote") {
                             wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 校務系統出現異常，目前無法登入 </div>`;
                         }
