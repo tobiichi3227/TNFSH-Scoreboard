@@ -38,28 +38,28 @@ class _NotExistError(_Error):
 NotExistError = _NotExistError()
 
 
-class _MemberNotFoundError(_Error):
-    def __repr__(self):
-        return "Emembernoext"
-
-
-MemberNotFoundError = _MemberNotFoundError()
-
-
-class _WrongPasswordError(_Error):
+class _WrongPasswordOrAccountError(_Error):
     def __str__(self):
-        return "Ewrongpw"
+        return "Ewrongpwacct"
 
 
-WrongPasswordError = _WrongPasswordError()
+WrongPasswordOrAccountError = _WrongPasswordOrAccountError()
 
 
-class _MemberLockedError(_Error):
+class _WrongValidateCodeError(_Error):
     def __str__(self):
-        return "Elocked"
+        return "Ewrongvalidatecode"
 
 
-MemberLockedError = _MemberLockedError()
+WrongValidateCodeError = _WrongValidateCodeError()
+
+
+class _WrongTooManyTimesError(_Error):
+    def __str__(self):
+        return "Ewrongtoomany"
+
+
+WrongTooManyTimesError = _WrongTooManyTimesError()
 
 
 class _WrongParamError(_Error):
@@ -67,15 +67,14 @@ class _WrongParamError(_Error):
         return "Eparam"
 
 
-WrongParamError = _WrongParamError()
-
-
-class _CanNotAccessError(_Error):
+class _RemoteServerError(_Error):
     def __str__(self):
-        return "Eacces"
+        return "Eremote"
 
 
-CanNotAccessError = _CanNotAccessError()
+RemoteServerError = _RemoteServerError()
+
+WrongParamError = _WrongParamError()
 
 
 class _UnknownError(_Error):
@@ -85,12 +84,5 @@ class _UnknownError(_Error):
 
 UnknownError = _UnknownError
 
-
-class _RemoteServerError(_Error):
-    def __str__(self):
-        return "Eremote"
-
-
-RemoteServerError = _RemoteServerError()
 
 ReturnType = tuple[_Error, Any]

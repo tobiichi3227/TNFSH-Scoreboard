@@ -4,7 +4,8 @@ from fake_useragent import UserAgent
 
 import const
 from services.service import client_session
-from utils.error import ReturnType, Success, RemoteServerError, Error
+from utils.error import ReturnType, Success, \
+    RemoteServerError, WrongPasswordOrAccountError, WrongTooManyTimesError, WrongValidateCodeError, Error
 
 user_agent = UserAgent()
 
@@ -78,7 +79,17 @@ class LoginService:
         # The session key len must equal to 36
         if j - i != 36:
             # Wrong Password or account or validate
-            return Error, None
+            error = Error
+            if html.find("帳號或密碼錯誤") != -1:
+                error = WrongPasswordOrAccountError
+
+            elif html.find("驗證碼錯誤") != -1:
+                error = WrongValidateCodeError
+
+            elif html.find("錯誤次數過多") != -1:
+                error = WrongTooManyTimesError
+
+            return error, None
 
         session_key = html[i:j]
 

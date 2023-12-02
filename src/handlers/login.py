@@ -2,7 +2,7 @@ import json
 
 import const
 import config
-from utils.error import Success, RemoteServerError
+from utils.error import Success, RemoteServerError, WrongValidateCodeError
 from handlers.base import RequestHandler, reqenv
 from services.service import client_session
 from services.api import get_student_info
@@ -23,6 +23,10 @@ class LoginHandler(RequestHandler):
             password = self.get_argument("password")
             validate_code = self.get_argument("validate_code")
             validate_src = self.get_argument("validate_src")
+
+            if len(validate_code) > 4:
+                await self.error(WrongValidateCodeError)
+                return
 
             err, form_token = await LoginService.inst.get_form_token()
             if err != Success:

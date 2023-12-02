@@ -67,10 +67,20 @@
                         let print = form.find("#print");
                         let wrapper = document.createElement("div");
 
-                        if (res === "E") {
+                        if (res === "Ewrongpwacct") {
                             change_validate_code();
-                            wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 帳號或密碼或驗證碼錯誤 </div>`;
+                            wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 帳號或密碼錯誤 </div>`;
+                            form.find("#InputPassword").val("");
                             form.find("#InputValidate").val("");
+
+                        } else if (res === "Ewrongvalidatecode") {
+                            change_validate_code();
+                            wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 驗證碼錯誤 </div>`;
+                            form.find("#InputValidate").val("");
+
+                        } else if (res === "Ewrongtoomany") {
+                            wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 錯誤次數過多，校務系統鎖定15分鐘無法登入 </div>`;
+
                         } else if (res === "Eremote") {
                             wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 校務系統出現異常，目前無法登入 </div>`;
                         }
@@ -82,7 +92,7 @@
                         form.removeClass("was-validated");
                     } else {
                         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                            route.go("/board/exam/");
+                            location.href = "/board/exam/";
                             return;
                         }
 
@@ -130,7 +140,7 @@
                 </div>
             </div>
             <div class="mb-4 d-flex">
-                <input type="text" id="InputValidate" class="form-control needs-validation" placeholder="Validate Code" style="width: 75%;" required/>
+                <input type="text" maxlength="4" id="InputValidate" class="form-control needs-validation" placeholder="Validate Code" style="width: 75%;" required/>
                 <div class="invalid-feedback">請輸入驗證碼</div>
                 <img id="validatePic" alt="validate picture" class="ms-3 img-fluid" src_src="" src="">
             </div>
