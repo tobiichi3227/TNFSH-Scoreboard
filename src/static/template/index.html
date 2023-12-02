@@ -20,8 +20,8 @@
     <script id="indexjs" session_id="{{ session.session_id }}">
         $(document).ready(() => {
             route.init();
-            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && route.session_id === null) {
-                route.go("/board/login");
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && route.session_id === null && !location.href.includes("login")) {
+                route.go("/board/login/");
             }
         });
     </script>
