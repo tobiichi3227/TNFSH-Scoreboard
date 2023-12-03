@@ -12,20 +12,22 @@
 
 <script>
     function init() {
-        $("#exam_select").on('change', function(e) {
-            var url = '/board/exam/?';
-            let s_i = $(this).val();
-            s_i = s_i.split(",");
-            if (s_i[0] === "-1" || s_i[1] === "-1") {
+        document.getElementById("exam_select").addEventListener('change', event => {
+            let url = '/board/exam/?';
+            const [std_seme_id, item_id] = event.target.value.split(",");
+
+            if (std_seme_id === "-1" || item_id === "-1") {
                 return;
             }
 
-            url += `&stdSemeId=${s_i[0]}`;
-            url += `&itemId=${s_i[1]}`;
+            url += `&stdSemeId=${std_seme_id}`;
+            url += `&itemId=${item_id}`;
 
             route.go(url);
         });
     }
+
+    init();
 </script>
 
 <div class="row">

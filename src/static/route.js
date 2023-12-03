@@ -37,10 +37,26 @@ function post(url, form_data) {
     return res;
 }
 
-async function get(url) {
-    let res = await fetch(url);
+function get(url) {
+    let res = fetch(url, {
+        method: 'GET'
+    });
 
     return res;
+}
+
+function run_script(script) {
+    // https://www.cnblogs.com/libin-1/p/6565458.html
+    const new_script = document.createElement('script');
+    new_script.innerHTML = script.innerHTML;
+
+    const src = script.getAttribute('src');
+    if (src) {
+        new_script.setAttribute('src', src);
+    }
+
+    document.head.appendChild(new_script);
+    document.head.removeChild(new_script);
 }
 
 var route = new function() {
@@ -50,23 +66,23 @@ var route = new function() {
     this.main_navbar = null;
 
     this.init = function() {
-        let session_id = $('#indexjs').attr('session_id');
-        this.main_navbar = $('.main-navbar');
+        let session_id = document.getElementById("indexjs").getAttribute('session_id');
+        this.main_navbar = document.getElementById('main-navbar');
 
-        this.main_navbar.find('.nav-link.logout').on('click', event => {
+        this.main_navbar.querySelector('.nav-link.logout').addEventListener('click', () => {
             post('/board/be/login', {
                 reqtype: 'logout',
                 session_id: session_id,
             }).then(_ => {
                 location.href = '/board/info/';
             });
-        })
+        });
 
         if (session_id != '') {
             this.session_id = parseInt(session_id);
-            this.main_navbar.find('.nav-link.logout').show();
+            this.main_navbar.querySelector('.nav-link.logout').style.display = 'block';
         } else {
-            this.main_navbar.find('.nav-link.login').show();
+            this.main_navbar.querySelector('.nav-link.login').style.display = 'block';
         }
 
         this.update(0);
@@ -86,13 +102,17 @@ var route = new function() {
             this.prev_url = location.href;
             let parts = location.href.split('/');
             let page = parts[4];
-            if (page == 'index') {
+            if (page.length === 0 || page === 'index') {
                 page = 'info';
             }
 
             let req_path = parts[4];
             for (let i = 5; i < parts.length-1; i++) {
                 req_path += `/${parts[i]}`;
+            }
+
+            if (page === 'info') {
+                req_path = 'info';
             }
 
             let args = '';
@@ -106,32 +126,63 @@ var route = new function() {
 
             let request_url = `/board/be/${req_path}?${args}`;
             get(request_url).then(response => {
-                return response.text();
-            }).then(res => {
-                routerView.html(res).ready(() => {
-                    route.main_navbar.find('li').find('a.active').removeClass('active');
-                    route.main_navbar.find(`li.${page}`).find('a').addClass('active');
+                if (!response.ok) return "";
 
-                    if (typeof(init) == 'function') {
-                        init();
+                return response.text();
+            }).then(html => {
+                let callback = () => {
+                    route.main_navbar.querySelectorAll('li').forEach(el => {
+                        let a = el.querySelector('a.active');
+                        if (a !== null) {
+                            a.classList.remove('active');
+                        }
+                    });
+
+                    if (page.length !== 0) {
+                        route.main_navbar.querySelectorAll(`li.${page}`).forEach(el => {
+                            let a = el.querySelector('a');
+                            if (a !== null) {
+                                a.classList.add('active');
+                            }
+                        });
                     }
 
-                    routerView.find('a').each((_, element) => {
-                        let j_element = $(element);
-                        j_element.on('click', (event) => {
-                            if (sameOrigin(j_element.attr('href'), location.href)) {
+                    routerView.querySelectorAll('a').forEach(el => {
+                        el.addEventListener('click', event => {
+                            if (sameOrigin(el.getAttribute('href'), localStorage.href)) {
                                 event.preventDefault();
-                                history.pushState(null, '', j_element.attr('href'))
-                                PoPState()
+                                history.pushState(null, '', el.getAttribute('href'));
+                                PoPState();
                             }
-                        })
-                    })
-                });
+                        });
+                    });
 
+                    const scripts = routerView.querySelectorAll('script');
+                    for (let script of scripts) {
+                        run_script(script);
+                    }
+                };
+
+                routerView.innerHTML = html;
+                
+                // callback();
+                if (document.readyState === 'complete' || document.readyState !== 'loading') {
+                    setTimeout(function() {
+                        callback();
+                    }, 0);
+                } else {
+                    let handler = function() {
+                        document.removeEventListener('DOMContentLoaded', handler, false);
+                        // window.removeEventListener('load', handler, false);
+                        callback();
+                    }
+                    document.addEventListener('DOMContentLoaded', handler, false);
+                    // window.addEventListener('load', handler, false);
+                }
             });
         }
 
-        var routerView = $('#routerView');
+        let routerView = document.getElementById('routerView');
 
         if (mode == 1) {
             PoPState();
@@ -139,7 +190,6 @@ var route = new function() {
         }
 
         window.addEventListener('DOMContentLoaded', onLoad);
-        document.getElementById('routerView').addEventListener('DOMContentLoaded', onLoad);
         window.addEventListener('popstate', PoPState);
 
         function onLoad() {
@@ -154,7 +204,5 @@ var route = new function() {
                 })
             })
         }
-
-        onLoad()
     }
 }

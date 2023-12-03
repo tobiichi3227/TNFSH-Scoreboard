@@ -3,59 +3,65 @@
         get('/board/be/validate').then(response => {
             return response.json();
         }).then(res => {
-            $("#validatePic").attr("src", res.picture);
-            $("#validatePic").attr("src_str", res.src);
+            let validatePic = document.getElementById('validatePic');
+            validatePic.setAttribute('src', res.picture);
+            validatePic.setAttribute('src_src', res.src);
         });
     }
+
+    function get_response_message_div(message) { return `<div class="alert alert-warning alert-dismissible" role="alert"> ${message} </div>` };
 
     function init() {
         change_validate_code();
         
-        $("#validatePic").on("click", function(event) {
+        document.getElementById('validatePic').addEventListener('click', _ => {
             change_validate_code();
         });
 
-        $("#togglePasswordVisible").on("click", function(event) {
+        document.getElementById('togglePasswordVisible').addEventListener('click', event => {
             event.preventDefault();
-            let password = $(this).parent().find("#InputPassword");
-            let current_display_type = password.attr("type");
+            let password = document.getElementById("InputPassword");
+            let eye_open = document.getElementById("eyeOpen");
+            let eye_close = document.getElementById("eyeClose");
 
-            if (current_display_type === "password") {
-                password.attr("type", "text");
-                $(this).find("#eyeOpen").hide();
-                $(this).find("#eyeClose").show();
+            if (password.getAttribute('type') === 'password') {
+                password.setAttribute('type', 'text');
+                eye_open.style.display = 'none';
+                eye_close.style.display = 'block';
             } else {
-                password.attr("type", "password");
-                $(this).find("#eyeOpen").show();
-                $(this).find("#eyeClose").hide();
+                password.setAttribute('type', 'password');
+                eye_open.style.display = 'block';
+                eye_close.style.display = 'none';
             }
         });
 
-        $("button.submit").on("click", (event) => {
-            let form = $("form#loginForm");
+        document.querySelector('button.submit').addEventListener('click', event => {
+            let form = document.getElementById("loginForm");
             let flag = false;
-            form.find(".needs-validation").each(function(i, element) {
-                if (!element.checkValidity()) {
+
+            form.querySelectorAll('.needs-validation').forEach(el => {
+                if (!el.checkValidity()) {
                     event.preventDefault();
                     event.stopPropagation();
                     flag = true;
                 }
 
-                element.classList.add("was-validated");
-            });
+                el.classList.add('was-validated');
+            })
 
             if (flag) {
-                form.addClass("was-validated");
+                form.classList.add('was-validated');
                 return;
             }
 
-            let mail = form.find("#InputEmail").val();
-            let password = form.find("#InputPassword").val();
-            let validate_code = form.find("#InputValidate").val();
-            let validate_src = form.find("#validatePic").attr("src_str");
+            let mail = form.querySelector("#InputEmail").value;
+            let password = form.querySelector('#InputPassword').value;
+            let validate_code = form.querySelector('#InputValidate').value;
+            let validate_src = form.querySelector("#validatePic").getAttribute('src_src');
 
+            
             post('/board/be/login', {
-                reqtype: "login",
+                reqtype: 'login',
                 username: mail,
                 password: password,
                 validate_src: validate_src,
@@ -64,32 +70,38 @@
                 return response.text();
             }).then(res => {
                 if (res[0] === "E") {
-                    let print = form.find("#print");
+                    let print = form.querySelector("#print");
                     let wrapper = document.createElement("div");
 
                     if (res === "Ewrongpwacct") {
                         change_validate_code();
-                        wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 帳號或密碼錯誤 </div>`;
-                        form.find("#InputPassword").val("");
-                        form.find("#InputValidate").val("");
+                        wrapper.innerHTML = get_response_message_div('帳號或密碼錯誤');
+                        form.querySelector("#InputPassword").value = "";
+                        form.querySelector("#InputValidate").value = "";
 
                     } else if (res === "Ewrongvalidatecode") {
                         change_validate_code();
-                        wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 驗證碼錯誤 </div>`;
-                        form.find("#InputValidate").val("");
+                        wrapper.innerHTML = get_response_message_div('驗證碼錯誤');
+                        form.querySelector("#InputValidate").value = "";
 
                     } else if (res === "Ewrongtoomany") {
-                        wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 錯誤次數過多，校務系統鎖定15分鐘無法登入 </div>`;
+                        wrapper.innerHTML = get_response_message_div('錯誤次數過多，校務系統鎖定15分鐘無法登入');
 
                     } else if (res === "Eremote") {
-                        wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 校務系統出現異常，目前無法登入 </div>`;
+                        wrapper.innerHTML = get_response_message_div('校務系統出現異常，目前無法登入');
+
+                    } else {
+                        change_validate_code();
+                        wrapper.innerHTML = get_response_message_div('帳號或密碼或驗證碼錯誤');
+                        form.querySelector("#InputPassword").value = "";
+                        form.querySelector("#InputValidate").value = "";
                     }
 
-                    print.append(wrapper);
+                    print.appendChild(wrapper);
                     setTimeout(() => {
-                        print.html("");
-                    }, 1000);
-                    form.removeClass("was-validated");
+                        print.innerHTML = '';
+                    }, 1500);
+                    form.classList.remove("was-validated");
 
                 } else {
                     if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
@@ -106,12 +118,11 @@
             });
         });
     }
-</script>
-<style>
-    div.mb-3 {
-        text-align: center;
-    }
 
+    init();
+</script>
+
+<style>
     button.submit {
         position: relative;
         left: 50%;
