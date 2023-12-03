@@ -5,6 +5,44 @@ function sameOrigin(a, b) {
     return urlA.origin === urlB.origin;
 }
 
+function get_form_data(obj) {
+    const fd = new FormData();
+    for (let i in obj) {
+        append_form_data(obj[i], fd, i)
+    }
+
+    return fd
+}
+
+function append_form_data(data, form_data, key) {
+    if ((typeof data === 'object' && data !== null && !(data instanceof File)) || Array.isArray(data)) {
+        for (const i in data) {
+            if ((typeof data[i] === 'object' && data[i] !== null) || Array.isArray(data[i])) {
+                append_form_data(data[i], form_data, key + `[${i}]`)
+            } else {
+                form_data.append(key + `[${i}]`, data[i])
+            }
+        }
+    } else {
+        form_data.append(key, data)
+    }
+}
+
+function post(url, form_data) {
+    let res = fetch(url, {
+        method: 'POST',
+        body: get_form_data(form_data)
+    });
+
+    return res;
+}
+
+async function get(url) {
+    let res = await fetch(url);
+
+    return res;
+}
+
 var route = new function() {
     this.session_id = null;
     this.curr_url = null;
@@ -16,12 +54,12 @@ var route = new function() {
         this.main_navbar = $('.main-navbar');
 
         this.main_navbar.find('.nav-link.logout').on('click', event => {
-            $.post('/board/be/login', {
+            post('/board/be/login', {
                 reqtype: 'logout',
                 session_id: session_id,
-            }, res => {
+            }).then(_ => {
                 location.href = '/board/info/';
-            })
+            });
         })
 
         if (session_id != '') {
@@ -64,7 +102,12 @@ var route = new function() {
             } else {
                 args = parts[1] + `&cache=${new Date().getTime()}`
             }
-            $.get('/board/be/' + req_path, args, res => {
+            
+
+            let request_url = `/board/be/${req_path}?${args}`;
+            get(request_url).then(response => {
+                return response.text();
+            }).then(res => {
                 routerView.html(res).ready(() => {
                     route.main_navbar.find('li').find('a.active').removeClass('active');
                     route.main_navbar.find(`li.${page}`).find('a').addClass('active');
@@ -84,7 +127,8 @@ var route = new function() {
                         })
                     })
                 });
-            })
+
+            });
         }
 
         var routerView = $('#routerView');

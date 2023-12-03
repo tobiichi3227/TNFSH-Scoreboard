@@ -1,7 +1,8 @@
 <script>
     function change_validate_code() {
-        $.get("/board/be/validate", res => {
-            res = JSON.parse(res);
+        get('/board/be/validate').then(response => {
+            return response.json();
+        }).then(res => {
             $("#validatePic").attr("src", res.picture);
             $("#validatePic").attr("src_str", res.src);
         });
@@ -53,58 +54,56 @@
             let validate_code = form.find("#InputValidate").val();
             let validate_src = form.find("#validatePic").attr("src_str");
 
-            $.post(
-                "/board/be/login",
-                {
-                    reqtype: "login",
-                    username: mail,
-                    password: password,
-                    validate_src: validate_src,
-                    validate_code: validate_code,
-                },
-                res => {
-                    if (res[0] === "E") {
-                        let print = form.find("#print");
-                        let wrapper = document.createElement("div");
+            post('/board/be/login', {
+                reqtype: "login",
+                username: mail,
+                password: password,
+                validate_src: validate_src,
+                validate_code: validate_code,
+            }).then(response => {
+                return response.text();
+            }).then(res => {
+                if (res[0] === "E") {
+                    let print = form.find("#print");
+                    let wrapper = document.createElement("div");
 
-                        if (res === "Ewrongpwacct") {
-                            change_validate_code();
-                            wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 帳號或密碼錯誤 </div>`;
-                            form.find("#InputPassword").val("");
-                            form.find("#InputValidate").val("");
+                    if (res === "Ewrongpwacct") {
+                        change_validate_code();
+                        wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 帳號或密碼錯誤 </div>`;
+                        form.find("#InputPassword").val("");
+                        form.find("#InputValidate").val("");
 
-                        } else if (res === "Ewrongvalidatecode") {
-                            change_validate_code();
-                            wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 驗證碼錯誤 </div>`;
-                            form.find("#InputValidate").val("");
+                    } else if (res === "Ewrongvalidatecode") {
+                        change_validate_code();
+                        wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 驗證碼錯誤 </div>`;
+                        form.find("#InputValidate").val("");
 
-                        } else if (res === "Ewrongtoomany") {
-                            wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 錯誤次數過多，校務系統鎖定15分鐘無法登入 </div>`;
+                    } else if (res === "Ewrongtoomany") {
+                        wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 錯誤次數過多，校務系統鎖定15分鐘無法登入 </div>`;
 
-                        } else if (res === "Eremote") {
-                            wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 校務系統出現異常，目前無法登入 </div>`;
-                        }
+                    } else if (res === "Eremote") {
+                        wrapper.innerHTML = `<div class="alert alert-warning alert-dismissible" role="alert"> 校務系統出現異常，目前無法登入 </div>`;
+                    }
 
-                        print.append(wrapper);
-                        setTimeout(() => {
-                            print.html("");
-                        }, 1000);
-                        form.removeClass("was-validated");
+                    print.append(wrapper);
+                    setTimeout(() => {
+                        print.html("");
+                    }, 1000);
+                    form.removeClass("was-validated");
+
+                } else {
+                    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                        location.href = "/board/exam/";
+                        return;
+                    }
+
+                    if (route.prev_url == null) {
+                        location.href = "/board/info/";
                     } else {
-                        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                            location.href = "/board/exam/";
-                            return;
-                        }
-
-                        if (route.prev_url == null) {
-                            location.href = "/board/info/";
-                        } else {
-                            location.href = route.prev_url;
-                        }
-
+                        location.href = route.prev_url;
                     }
                 }
-            );
+            });
         });
     }
 </script>
