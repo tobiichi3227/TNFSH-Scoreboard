@@ -4,6 +4,7 @@ from fake_useragent import UserAgent
 
 import const
 from services.service import client_session
+from services.utils import timeout_handle
 from utils.error import ReturnType, Success, \
     RemoteServerError, WrongPasswordOrAccountError, WrongTooManyTimesError, WrongValidateCodeError, Error
 
@@ -34,6 +35,7 @@ class LoginService:
     def __init__(self) -> None:
         LoginService.inst: "LoginService" = self
 
+    @timeout_handle
     async def get_form_token(self) -> ReturnType:
         """
         Get form token from login page
@@ -55,6 +57,7 @@ class LoginService:
 
         return Success, form_token
 
+    @timeout_handle
     async def get_session_key(self, login_payload: LoginPayload) -> ReturnType:
         """
         Simulate user login action to obtain session id from redirect page.

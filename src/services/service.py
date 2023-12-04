@@ -2,7 +2,7 @@ import aiohttp
 
 
 timeout = aiohttp.ClientTimeout(total=20)
-client_session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=27), timeout=timeout)
+client_session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=5), timeout=timeout)
 
 
 class Service:

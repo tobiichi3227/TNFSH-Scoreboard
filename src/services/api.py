@@ -5,8 +5,10 @@ import orjson
 import const
 from utils.error import ReturnType, Success, RemoteServerError
 from services.service import client_session
+from services.utils import timeout_handle
 
 
+@timeout_handle
 async def get_validate_pic() -> ReturnType:
     async with client_session.post(const.VALIDATE_URL) as resp:
         if not resp.ok:
@@ -19,6 +21,7 @@ async def get_validate_pic() -> ReturnType:
         }
 
 
+@timeout_handle
 async def get_student_info(session_key: str) -> ReturnType:
     """
     Get student info from index page
@@ -48,6 +51,7 @@ async def get_student_info(session_key: str) -> ReturnType:
     }
 
 
+@timeout_handle
 async def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> ReturnType:
     """
     Get specific exam statistics data such as rank, score sum of all subjects, score average.
@@ -97,6 +101,7 @@ async def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Re
     }
 
 
+@timeout_handle
 async def a0410S_StdSemeView_select(session_key: str, std_id: str) -> ReturnType:
     """
 
@@ -126,6 +131,7 @@ async def a0410S_StdSemeView_select(session_key: str, std_id: str) -> ReturnType
     } for obj in res["dataRows"]]
 
 
+@timeout_handle
 async def get_school_year_data(session_key: str, year: int = None, seme: int = None) -> ReturnType:
     """
     Get school year data
@@ -161,6 +167,7 @@ async def get_school_year_data(session_key: str, year: int = None, seme: int = N
     } for obj in res["dataRows"]]
 
 
+@timeout_handle
 async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: str) -> ReturnType:
     """
     Get single exam scores data
