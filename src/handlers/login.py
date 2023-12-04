@@ -1,11 +1,11 @@
 import json
+import base64
 
-import const
 import config
-from utils.error import Success, RemoteServerError, WrongValidateCodeError
+from utils.error import Success, WrongValidateCodeError
+from utils.validate import get_validate_code
 from handlers.base import RequestHandler, reqenv
-from services.service import client_session
-from services.api import get_student_info
+from services.api import get_student_info, get_validate_pic
 from services.login import LoginService, LoginPayload
 from services.session import SessionService
 
@@ -23,6 +23,19 @@ class LoginHandler(RequestHandler):
             password = self.get_argument("password")
             validate_code = self.get_argument("validate_code")
             validate_src = self.get_argument("validate_src")
+            using_ocr = self.get_argument("using_ocr")
+
+            if using_ocr == "true":
+                err, res = await get_validate_pic()
+                if err != Success:
+                    await self.error(err)
+
+                validate_src: str = res["src"]
+                validate_pic: str = res["picture"]
+
+                # Remove "data:image/jpeg;base64," from picture base64 encoded string
+                validate_pic = validate_pic[validate_pic.find(",") + 1:]
+                validate_code = get_validate_code(base64.b64decode(validate_pic))
 
             if len(validate_code) > 4:
                 await self.error(WrongValidateCodeError)
@@ -68,13 +81,9 @@ class LoginHandler(RequestHandler):
 
 class ValidateHandler(RequestHandler):
     async def get(self):
-        async with client_session.post(const.VALIDATE_URL) as resp:
-            if not resp.ok:
-                await self.error(RemoteServerError)
-                return
+        err, res = await get_validate_pic()
+        if err != Success:
+            await self.error(err)
+            return
 
-            res = await resp.json()
-            await self.finish(json.dumps({
-                "picture": res["src"],
-                "src": res["validateSrc"],
-            }))
+        await self.finish(json.dumps(res))

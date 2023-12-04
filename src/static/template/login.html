@@ -1,8 +1,13 @@
 <script>
     function change_validate_code() {
         get('/board/be/validate').then(response => {
-            return response.json();
+            return response.text();
         }).then(res => {
+            if (res[0] === "E") {
+                return;
+            }
+
+            res = JSON.parse(res);
             let validatePic = document.getElementById('validatePic');
             validatePic.setAttribute('src', res.picture);
             validatePic.setAttribute('src_src', res.src);
@@ -12,8 +17,21 @@
     function get_response_message_div(message) { return `<div class="alert alert-warning alert-dismissible" role="alert"> ${message} </div>` };
 
     function init() {
-        change_validate_code();
+        // change_validate_code();
         
+        (() => {
+            let manual = document.getElementById('manualValidate');
+            manual.addEventListener('click', _ => {
+                let section = document.getElementById('validateSection');
+                section.querySelectorAll('.validate').forEach(el => {
+                    el.style.display = '';
+                })
+                manual.style.display = 'none';
+                change_validate_code();
+            });
+
+        })();
+
         document.getElementById('validatePic').addEventListener('click', _ => {
             change_validate_code();
         });
@@ -58,6 +76,7 @@
             let password = form.querySelector('#InputPassword').value;
             let validate_code = form.querySelector('#InputValidate').value;
             let validate_src = form.querySelector("#validatePic").getAttribute('src_src');
+            let using_ocr = document.getElementById('manualValidate').style.display !== 'none';
 
             
             post('/board/be/login', {
@@ -66,6 +85,7 @@
                 password: password,
                 validate_src: validate_src,
                 validate_code: validate_code,
+                using_ocr: using_ocr,
             }).then(response => {
                 return response.text();
             }).then(res => {
@@ -149,10 +169,12 @@
                     <div class="invalid-feedback">請輸入密碼</div>
                 </div>
             </div>
-            <div class="mb-4 d-flex">
-                <input type="text" maxlength="4" id="InputValidate" class="form-control needs-validation" placeholder="Validate Code" style="width: 75%;" required/>
+            <div class="mb-4 d-flex" id="validateSection">
+                <input type="text" maxlength="4" id="InputValidate" class="form-control validate" placeholder="Validate Code" style="width: 75%; display: none;"/>
                 <div class="invalid-feedback">請輸入驗證碼</div>
-                <img id="validatePic" alt="validate picture" class="ms-3 img-fluid" src_src="" src="">
+                <img id="validatePic" alt="validate picture" class="ms-3 img-fluid validate" src_src="" src="" style="display: none;">
+
+                <button type="button" class="btn btn-primary" id="manualValidate">我要手動輸入驗證碼</button>
             </div>
             <div class="mb-5 mb-lg-3" id="print"></div>
             <button type="button" class="btn btn-primary my-3 submit" aria-label="login button" tabindex="0">

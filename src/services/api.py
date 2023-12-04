@@ -1,4 +1,3 @@
-import json
 import base64
 
 import orjson
@@ -6,6 +5,18 @@ import orjson
 import const
 from utils.error import ReturnType, Success, RemoteServerError
 from services.service import client_session
+
+
+async def get_validate_pic() -> ReturnType:
+    async with client_session.post(const.VALIDATE_URL) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json()
+        return Success, {
+            "picture": res["src"],
+            "src": res["validateSrc"],
+        }
 
 
 async def get_student_info(session_key: str) -> ReturnType:
