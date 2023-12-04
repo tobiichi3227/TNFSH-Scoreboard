@@ -64,8 +64,8 @@ var route = new function() {
     this.curr_url = null;
     this.prev_url = null;
     this.main_navbar = null;
-
-    this.init = function() {
+    
+    this.init_ui = function() {
         let session_id = document.getElementById("indexjs").getAttribute('session_id');
         this.main_navbar = document.getElementById('main-navbar');
 
@@ -84,9 +84,7 @@ var route = new function() {
         } else {
             this.main_navbar.querySelector('.nav-link.login').style.display = 'block';
         }
-
-        this.update(0);
-    }
+    }    
 
     this.go = (url) => {
         window.history.pushState(null, document.title, url);
@@ -102,12 +100,12 @@ var route = new function() {
             this.prev_url = location.href;
             let parts = location.href.split('/');
             let page = parts[4];
-            if (page.length === 0 || page === 'index') {
+            if (page === undefined || page.length === 0 || page === 'index') {
                 page = 'info';
             }
 
             let req_path = parts[4];
-            for (let i = 5; i < parts.length-1; i++) {
+            for (let i = 5; i < parts.length - 1; i++) {
                 req_path += `/${parts[i]}`;
             }
 
@@ -120,7 +118,7 @@ var route = new function() {
             if (parts == null) {
                 args = `cache=${new Date().getTime()}`;
             } else {
-                args = parts[1] + `&cache=${new Date().getTime()}`
+                args = `${parts[1]}&cache=${new Date().getTime()}`
             }
             
 
@@ -131,23 +129,18 @@ var route = new function() {
                 return response.text();
             }).then(html => {
                 let callback = () => {
-                    route.main_navbar.querySelectorAll('li').forEach(el => {
-                        let a = el.querySelector('a.active');
-                        if (a !== null) {
-                            a.classList.remove('active');
-                        }
-                    });
-
                     if (page.length !== 0) {
-                        route.main_navbar.querySelectorAll(`li.${page}`).forEach(el => {
-                            let a = el.querySelector('a');
-                            if (a !== null) {
-                                a.classList.add('active');
-                            }
-                        });
+                        // There will only be one li.page, so we can just use querySelector to change classlist of a.
+                        // If this code throw exception, your code must have bug.
+                        let node = null;
+                        node = route.main_navbar.querySelector('li > a.active');
+                        if (node !== null) node.classList.remove('active');
+
+                        node = route.main_navbar.querySelector(`li.${page} > a`);
+                        if (node !== null) node.classList.add('active');
                     }
 
-                    routerView.querySelectorAll('a').forEach(el => {
+                    routerView.querySelectorAll('a[href]').forEach(el => {
                         el.addEventListener('click', event => {
                             if (sameOrigin(el.getAttribute('href'), localStorage.href)) {
                                 event.preventDefault();
@@ -189,7 +182,7 @@ var route = new function() {
             return;
         }
 
-        window.addEventListener('DOMContentLoaded', onLoad);
+        document.addEventListener('DOMContentLoaded', onLoad);
         window.addEventListener('popstate', PoPState);
 
         function onLoad() {
@@ -204,5 +197,7 @@ var route = new function() {
                 })
             })
         }
+
+        onLoad();
     }
 }
