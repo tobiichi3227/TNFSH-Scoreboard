@@ -18,7 +18,7 @@
 
     function init() {
         // change_validate_code();
-        
+
         (() => {
             let manual = document.getElementById('manualValidate');
             manual.addEventListener('click', _ => {
@@ -78,7 +78,7 @@
             let validate_src = form.querySelector("#validatePic").getAttribute('src_src');
             let using_ocr = document.getElementById('manualValidate').style.display !== 'none';
 
-            
+
             post('/board/be/login', {
                 reqtype: 'login',
                 username: mail,
@@ -174,7 +174,7 @@
                 <div class="invalid-feedback">請輸入驗證碼</div>
                 <img id="validatePic" alt="validate picture" class="ms-3 img-fluid validate" src_src="" src="" style="display: none;">
 
-                <button type="button" class="btn btn-primary" id="manualValidate">我要手動輸入驗證碼</button>
+                <button type="button" class="btn btn-primary mx-auto" id="manualValidate">我要手動輸入驗證碼</button>
             </div>
             <div class="mb-5 mb-lg-3" id="print"></div>
             <button type="button" class="btn btn-primary my-3 submit" aria-label="login button" tabindex="0">
