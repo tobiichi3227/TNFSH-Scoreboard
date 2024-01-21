@@ -238,7 +238,7 @@ async def get_term_scores(session_key: str, student_id: str) -> ReturnType:
         "all_score": score_obj["scoreT"],
         "deserved_credits": score_obj["credSum"],
         "observed_credits": score_obj["credTot"],
-        "totoal_observed_credits_sum": score_obj["credAdd"],
+        "total_observed_credits_sum": score_obj["credAdd"],
     } for score_obj in res["dataRows"]]
 
     return Success, scores
@@ -282,7 +282,7 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
             score["score"] = ""
 
         if score["score_original"] is None:
-            score["score"] = ""
+            score["score_original"] = ""
 
         if score["score_examed"] is None:
             score["score_examed"] = ""
