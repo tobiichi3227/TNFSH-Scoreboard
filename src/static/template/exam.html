@@ -1,3 +1,5 @@
+{% from utils.htmlgen import add_color_style_html%}
+
 <style>
 .gray-line {
     border:0;
@@ -65,14 +67,14 @@
         </thead>
         <tbody>
             <tr>
-                {% if stats["score_sum"] == "" %}
+                {% if (score_sum := stats["score_sum"]) == "" %}
                     <td scope="row">尚未公佈</td>
                 {% else %}
-                    <td scope="row">{{ stats["score_sum"] }}</td>
+                    <td scope="row">{{ score_sum }}</td>
                 {% end %}
 
-                {% if stats["average"] != "" %}
-                    <td>{{ round(stats["average"], 2) }}</td>
+                {% if (average := stats["average"]) != "" %}
+                    <td>{{ round(average, 2) }}</td>
                 {% else %}
                     <td>尚未公佈</td>
                 {% end %}
@@ -117,16 +119,16 @@
 
                 {% if score["is_participated"] != "否" %}
                     <td>缺考</td>
-                {% elif score["score"] == "" %}
+                {% elif (s := score["score"]) == "" %}
                     <td>尚未公佈</td>
                 {% else %}
-                    <td {% if int(score["score"]) < 60 %} style="color: red;" {% end %}>{{ score["score"] }}</td>
+                    <td {% if int(s) < 60 %} {{ add_color_style_html("red") }} {% end %}>{{ s }}</td>
                 {% end %}
 
-                {% if score["class_average"] == "" %}
+                {% if (class_average := score["class_average"]) == "" %}
                     <td>尚未公佈</td>
                 {% else %}
-                    <td>{{ score["class_average"] }}</td>
+                    <td>{{ class_average }}</td>
                 {% end %}
             </tr>
         {% end %}

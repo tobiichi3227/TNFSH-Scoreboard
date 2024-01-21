@@ -1,0 +1,120 @@
+{% from utils.htmlgen import add_color_style_html %}
+
+<script>
+    function init() {
+        document.getElementById("term_select").addEventListener('change', event => {
+            let url = '/board/term/?';
+            const [std_seme_id] = event.target.value.split(",");
+
+            if (std_seme_id === "-1") {
+                return;
+            }
+
+            url += `&stdSemeId=${std_seme_id}`;
+
+            route.go(url);
+        });
+    }
+
+    init();
+</script>
+
+<div class="row">
+    <select class="form-select my-3 col-12" id="term_select">
+        <option value="-1">請選擇學期</option>
+        {% for score_obj in item_ids %}
+            <option value="{{ f"{score_obj['stdSemeId']}" }}"
+                {% if std_seme_id is not None and int(std_seme_id) == score_obj['stdSemeId'] %}
+                    selected
+                {% end %}
+            >
+                {% if score_obj["seme"] == 1 %}
+                    {% set seme = "上" %}
+                {% else %}
+                    {% set seme = "下" %}
+                {% end %}
+                {{ f"{score_obj['year']} {seme}" }}
+            </option>
+        {% end %}
+    </select>
+
+
+    {% if subject_scores is not None %}
+
+    {% if term_scores is not None %}
+
+    <table class="table table-responsive-sm col-12 mx-lg-3">
+        <thead>
+            <tr>
+                <th scope="col">學業成績</th>
+                <th scope="col">總分</th>
+                <th scope="col">應得 / 實得 / 累計學分</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% if (score := term_scores["score"]) == "" %}
+                    <td>尚未公布</td>
+                {% else %}
+                    <td scope="row">{{ round(score, 1) }}</td>
+                {% end %}
+
+                {% if (all_score := term_scores["all_score"]) == "" %}
+                    <td>尚未公布</td>
+                {% else %}
+                    <td>{{ all_score }}</td>
+                {% end %}
+
+                {% set deserved = term_scores["deserved_credits"] %}
+                {% set observed = term_scores["observed_credits"] %}
+                {% set total_observed_sum = term_scores["total_observed_credits_sum"] %}
+
+                {% if deserved == "" %}
+                    <td>尚未公布</td>
+                {% else %}
+                    <td>{{ "{} / {} / {}".format(deserved, observed, total_observed_sum) }}</td>
+                {% end %}
+            </tr>
+        </tbody>
+    </table>
+
+    {% end %}
+
+    <table class="table table-responsive-sm col-12 mx-lg-3 my-3">
+        <thead>
+            <tr>
+                <th scope="col">科目</th>
+                <th scope="col">必選修</th>
+                <th scope="col">學分</th>
+                <th scope="col">最終分數</th>
+                <th scope="col">原始分數</th>
+                <th scope="col">補考分數</th>
+                <th scope="col">重修分數</th>
+                <th scope="col">班平均</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for score in subject_scores %}
+            <tr>
+                <td scope="row">{{ score["subject"] }}</td>
+                <td>{{ score["course_type"] }}</td>
+                <td>{{ score["credits"] }}</td>
+
+                {% if (s := score["score"]) == "" %}
+                    <td>尚未公佈</td>
+                {% else %}
+                    <td {% if int(s) < 60 %} {{ add_color_style_html("red") }} {% end %}>{{ s }}</td>
+                {% end %}
+
+                <td>{{ score["score_original"] }}</td>
+                <td>{{ score["score_examed"] }}</td>
+                <td>{{ score["score_retake"] }}</td>
+
+                <td>{{ score["class_average"] }}</td>
+            </tr>
+        {% end %}
+        </tbody>
+    </table>
+    {% end %}
+</div>

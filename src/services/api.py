@@ -198,7 +198,7 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
         "score": score_obj.get("score", ""),
         "class_average": score_obj.get("yl", ""),
         "is_participated": score_obj["noExamMark"],
-    } for score_obj in res['dataRows']]
+    } for score_obj in res["dataRows"]]
 
     for score in scores:
         if score["score"] is None:
@@ -208,3 +208,106 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
             score["class_average"] = ""
 
     return Success, scores
+
+
+@timeout_handle
+async def get_term_scores(session_key: str, student_id: str) -> ReturnType:
+    """
+
+    :param session_key:
+    :param student_id:
+    :return:
+    """
+
+    data = {
+        "session_key": session_key,
+        "stdId": student_id,
+        "statusM": 15,
+        "queryKind": "a0410s",
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/A0410S_StdSemeView_select.action", data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json(loads=orjson.loads)
+
+    scores = [{
+        "stdSemeId": score_obj["id"],
+        "score": score_obj["sco6"],
+        "all_score": score_obj["scoreT"],
+        "deserved_credits": score_obj["credSum"],
+        "observed_credits": score_obj["credTot"],
+        "totoal_observed_credits_sum": score_obj["credAdd"],
+    } for score_obj in res["dataRows"]]
+
+    return Success, scores
+
+
+@timeout_handle
+async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnType:
+    """
+    Get single term all subject scores
+
+    :param session_key:
+    :param std_seme_id:
+    :return:
+    """
+
+    data = {
+        "session_key": session_key,
+        "pId": std_seme_id,
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/A0410S_OpenStdView_selectA0410s.action", data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json(loads=orjson.loads)
+
+    scores = [{
+        "subject": score_obj["subjId"],
+        "course_type": score_obj["courseType"],
+        "credits": score_obj["credits"],
+        "pass": score_obj["passYn"],
+        "score": score_obj.get("score", ""),
+        "score_original": score_obj.get("scoreSrc", ""),
+        "score_examed": score_obj.get("scoreExam", ""),
+        "score_retake": score_obj.get("scoreRem", ""),
+        "class_average": score_obj.get("yl", ""),
+    } for score_obj in res["dataRows"]]
+
+    for score in scores:
+        if score["score"] is None:
+            score["score"] = ""
+
+        if score["score_original"] is None:
+            score["score"] = ""
+
+        if score["score_examed"] is None:
+            score["score_examed"] = ""
+
+        if score["score_retake"] is None:
+            score["score_retake"] = ""
+
+    return Success, scores
+
+@timeout_handle
+async def get_reward(session_key: str):
+    data = {
+        "session_key": session_key,
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/B0305S_Reward_select.action", data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json(loads=orjson.loads)
+
+    rewards = [
+        {
+            "desc": obj["vo.fact"]
+        }
+
+        for obj in res["dataRows"]
+    ]
