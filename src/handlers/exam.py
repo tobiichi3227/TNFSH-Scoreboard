@@ -38,9 +38,6 @@ class ExamHandler(RequestHandler):
                 return
 
             for item in school_year_data:
-                if item["exam_name"] in ["學期成績", "平常成績"]:
-                    continue
-
                 item_ids.append({
                     "stdSemeId": s_id,
                     "itemId": item["itemId"],
