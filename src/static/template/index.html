@@ -12,6 +12,7 @@
     />
 
     <script src="/board/src/route.js"></script>
+    <script src="/board/src/swiped-events.min.js"></script>
     <meta charset="UTF-8"/>
 
     <title>TNFSH-Scoreboard</title>
@@ -23,6 +24,22 @@
                 route.go("/board/login/");
             } else {
                 route.update(0);
+            }
+            
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                document.addEventListener('swiped-left', () => {
+                    if (!sidebar.classList.contains('in')) {
+                        sidebar.classList.toggle('in');
+                        content.classList.toggle('out');
+                    }
+                });
+
+                document.addEventListener('swiped-right', () => {
+                    if (sidebar.classList.contains('in')) {
+                        sidebar.classList.toggle('in');
+                        content.classList.toggle('out');
+                    }
+                });
             }
 
             let sideslider = document.querySelector('[data-bs-toggle=collapse]');
