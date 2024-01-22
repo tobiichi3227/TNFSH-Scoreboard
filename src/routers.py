@@ -2,6 +2,7 @@ from handlers.index import IndexHandler, AboutHandler, InfoHandler
 from handlers.login import LoginHandler, ValidateHandler
 from handlers.exam import ExamHandler
 from handlers.term import TermHandler
+from handlers.reward import RewardHandler
 
 
 def get_routers():
@@ -15,5 +16,6 @@ def get_routers():
         ('/validate', ValidateHandler),
         ('/exam', ExamHandler),
         ('/term', TermHandler),
+        ('/reward', RewardHandler),
         # ('/studentcard'),
     ]

@@ -1,4 +1,5 @@
 import base64
+from typing import Tuple, Any
 
 import orjson
 
@@ -6,6 +7,13 @@ import const
 from utils.error import ReturnType, Success, RemoteServerError
 from services.service import client_session
 from services.utils import timeout_handle
+
+
+def get_optional_str(obj):
+    if obj is None:
+        return ""
+
+    return obj
 
 
 @timeout_handle
@@ -44,7 +52,7 @@ async def get_student_info(session_key: str) -> ReturnType:
     i = res.find("id=\"userInfo\">") + 14
     j = res.find("<", i)
 
-    tmp = orjson.loads(base64.b64decode(res[i:j]).decode('utf-8'))
+    tmp = orjson.loads(base64.b64decode(res[i:j]).decode("utf-8"))
     return Success, {
         "studentId": tmp["childId"],
         "name": tmp["name"]
@@ -195,17 +203,10 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
     scores = [{
         "subject": score_obj["subjId"],
         "exam_name": score_obj["itemId"],
-        "score": score_obj.get("score", ""),
-        "class_average": score_obj.get("yl", ""),
+        "score": get_optional_str(score_obj["score"]),
+        "class_average": get_optional_str(score_obj.get("yl")),
         "is_participated": score_obj["noExamMark"],
     } for score_obj in res["dataRows"]]
-
-    for score in scores:
-        if score["score"] is None:
-            score["score"] = ""
-
-        if score["class_average"] is None:
-            score["class_average"] = ""
 
     return Success, scores
 
@@ -270,30 +271,29 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
         "course_type": score_obj["courseType"],
         "credits": score_obj["credits"],
         "pass": score_obj["passYn"],
-        "score": score_obj.get("score", ""),
-        "score_original": score_obj.get("scoreSrc", ""),
-        "score_examed": score_obj.get("scoreExam", ""),
-        "score_retake": score_obj.get("scoreRem", ""),
-        "class_average": score_obj.get("yl", ""),
+        "score": get_optional_str(score_obj["score"]),
+        "score_original": get_optional_str(score_obj["scoreSrc"]),
+        "score_examed": get_optional_str(score_obj.get("scoreExam")),
+        "score_retake": get_optional_str(score_obj.get("scoreRem")),
+        "class_average": get_optional_str(score_obj.get("yl"))
     } for score_obj in res["dataRows"]]
-
-    for score in scores:
-        if score["score"] is None:
-            score["score"] = ""
-
-        if score["score_original"] is None:
-            score["score_original"] = ""
-
-        if score["score_examed"] is None:
-            score["score_examed"] = ""
-
-        if score["score_retake"] is None:
-            score["score_retake"] = ""
 
     return Success, scores
 
+
+def _get_rewards(reward_obj) -> tuple[int, int, int, int, int, int]:
+    c1 = reward_obj["reward1"]
+    c2 = reward_obj["reward2"]
+    c3 = reward_obj["reward3"]
+    c4 = reward_obj["reward4"]
+    c5 = reward_obj["reward5"]
+    c6 = reward_obj["reward6"]
+
+    return c1, c2, c3, c4, c5, c6
+
+
 @timeout_handle
-async def get_reward(session_key: str):
+async def get_rewards_record(session_key: str) -> ReturnType:
     data = {
         "session_key": session_key,
     }
@@ -304,10 +304,14 @@ async def get_reward(session_key: str):
 
         res = await resp.json(loads=orjson.loads)
 
-    rewards = [
-        {
-            "desc": obj["vo.fact"]
-        }
+    rewards = [{
+        "syear": obj["syear"],
+        "seme": obj["seme"],
+        "fact": obj["fact"],
+        "desc": get_optional_str(obj["rewardArticleId"]),
+        "rewards": _get_rewards(obj),
+        "cancel": get_optional_str(obj["cancelYn"]),
+        "cancel_date": obj["cancelDt"],
+    } for obj in res["dataRows"]]
 
-        for obj in res["dataRows"]
-    ]
+    return Success, rewards
