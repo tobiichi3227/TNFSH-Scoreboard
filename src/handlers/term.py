@@ -4,6 +4,7 @@ from handlers.base import RequestHandler, reqenv
 from services.api import get_school_year_data, a0410S_StdSemeView_select, get_term_scores, get_subject_term_scores
 from utils.error import RemoteServerError
 
+
 class TermHandler(RequestHandler):
     @reqenv
     async def get(self):
@@ -46,4 +47,5 @@ class TermHandler(RequestHandler):
                 term_scores = term_scores[0]
             else:
                 term_scores = None
-        await self.render("term.html", item_ids=item_ids, subject_scores=subject_scores, term_scores=term_scores, std_seme_id=std_seme_id)
+        await self.render("term.html", item_ids=item_ids, subject_scores=subject_scores, term_scores=term_scores,
+                          std_seme_id=std_seme_id)

@@ -39,13 +39,13 @@ def reqenv(func):
         self.session = None
         session_id = self.get_secure_cookie("session_id")
         if session_id is not None:
-            session_id = session_id.decode('utf-8')
+            session_id = session_id.decode("utf-8")
             err, flag = SessionService.inst.is_session_expire(session_id)
             if err != Success:
-                self.clear_cookie('session_id', path='/board')
+                self.clear_cookie("session_id", path="/board")
 
             elif flag:
-                self.clear_cookie('session_id', path='/board')
+                self.clear_cookie("session_id", path="/board")
                 SessionService.inst.remove_session(session_id)
 
             else:

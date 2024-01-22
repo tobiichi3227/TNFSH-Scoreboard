@@ -13,7 +13,7 @@ from services.session import SessionService
 class LoginHandler(RequestHandler):
     @reqenv
     async def get(self):
-        await self.render('login.html')
+        await self.render("login.html")
 
     @reqenv
     async def post(self):
@@ -65,7 +65,7 @@ class LoginHandler(RequestHandler):
                 return
 
             SessionService.inst.create_session(session_key, info["studentId"], info["name"])
-            self.set_secure_cookie('session_id', session_key, path='/board', httponly=True)
+            self.set_secure_cookie("session_id", session_key, path="/board", httponly=True)
             await self.success()
 
         elif reqtype == "logout":
@@ -75,7 +75,7 @@ class LoginHandler(RequestHandler):
             if err != Success:
                 pass
 
-            self.clear_cookie('session_id', path='/board')
+            self.clear_cookie("session_id", path="/board")
             await self.success()
 
 

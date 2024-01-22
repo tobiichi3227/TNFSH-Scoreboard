@@ -22,12 +22,12 @@ class LoginPayload:
 
     def to_dict(self) -> dict[str, str]:
         return {
-            'loginId': self.login_id,
-            'password': self.password,
-            'validateCode': self.validate_code,
-            'validateSrc': self.validate_src,
-            'schNo': self.sch_no,
-            'formToken': self.form_token,
+            "loginId": self.login_id,
+            "password": self.password,
+            "validateCode": self.validate_code,
+            "validateSrc": self.validate_src,
+            "schNo": self.sch_no,
+            "formToken": self.form_token,
         }
 
 
