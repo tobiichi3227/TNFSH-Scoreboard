@@ -38,6 +38,10 @@ class RewardHandler(RequestHandler):
         if year is not None and seme is not None:
             stats = [0] * 6
             err, r = await get_rewards_record(session_id)
+            if err == RemoteServerError:
+                await self.render("remote-server-error.html")
+                return
+
             for key, group in itertools.groupby(r, key=lambda obj: (obj["syear"], obj["seme"])):
                 if key == (year, seme):
                     rewards = list(group)
