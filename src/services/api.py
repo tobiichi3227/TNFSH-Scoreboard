@@ -215,9 +215,10 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
 async def get_term_scores(session_key: str, student_id: str) -> ReturnType:
     """
 
-    :param session_key:
-    :param student_id:
-    :return:
+    :param session_key: the connection session key
+    :param student_id: student id from student info
+    :return: List of all year term data
+    :rtype: list[dict]
     """
 
     data = {
@@ -250,9 +251,10 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
     """
     Get single term all subject scores
 
-    :param session_key:
-    :param std_seme_id:
-    :return:
+    :param session_key: the connection session key
+    :param std_seme_id: from StdSemeView function
+    :return: List of all term subject scores
+    :rtype: list[dict]
     """
 
     data = {
@@ -294,6 +296,14 @@ def _get_rewards(reward_obj) -> tuple[int, int, int, int, int, int]:
 
 @timeout_handle
 async def get_rewards_record(session_key: str) -> ReturnType:
+    """
+    Get all reward record
+
+    :param session_key: the connection session key
+    :return: List of all reward record
+    :rtype: list[dict]
+    """
+
     data = {
         "session_key": session_key,
     }
@@ -315,3 +325,50 @@ async def get_rewards_record(session_key: str) -> ReturnType:
     } for obj in res["dataRows"]]
 
     return Success, rewards
+
+
+def _get_absences(absence_obj):
+    return [
+        absence_obj["morn"],
+        absence_obj["raiseFlag"],
+        absence_obj["lesson1"],
+        absence_obj["lesson2"],
+        absence_obj["lesson3"],
+        absence_obj["lesson4"],
+        absence_obj["rest"],
+        absence_obj["lesson5"],
+        absence_obj["lesson6"],
+        absence_obj["lesson7"],
+        absence_obj["lesson8"],
+    ]
+
+
+@timeout_handle
+async def get_absence_record(session_key: str) -> ReturnType:
+    """
+    Get all absence records
+
+    :param session_key: the connection session key
+    :return:
+    :rtype: list[dict]
+    """
+
+    data = {
+        "session_key": session_key,
+        "rows": 365 * 3,
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/B0209S_Absence_select.action", data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json(loads=orjson.loads)
+
+    absences = [{
+        "syear": obj["syear"],
+        "seme": obj["seme"],
+        "date": obj["absenceDt"],
+        "absences": _get_absences(obj),
+    } for obj in res["dataRows"]]
+
+    return Success, absences

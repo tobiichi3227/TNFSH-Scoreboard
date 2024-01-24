@@ -31,3 +31,66 @@ def get_reward_chinese_str(reward) -> str:
         res.append(f"大過{c6}支")
 
     return "".join(res)
+
+
+ABSENCE_SHORT_REASON = {
+    "1": "曠",
+    "2": "事",
+    "3": "病",
+    "4": "喪",
+    "5": "公",
+    "7": "遲",
+    "E": "退",
+    "B": "補",
+    "C": "減",
+    "N": "抵",
+    "O": "空",
+    "J": "婚",
+    "X": "產前",
+    "M": "娩",
+    "K": "陪產",
+    "Y": "流產",
+    "Z": "育嬰",
+    "W": "生理",
+    "9": "其他",
+    "F": "新冠",
+    "A": "跨",
+}
+
+ABSENCE_LONG_REASON = {
+    "1": "曠課",
+    "2": "事假",
+    "3": "病假",
+    "4": "喪假",
+    "5": "公假",
+    "7": "遲到",
+    "E": "早退",
+    # "B": "補",
+    # "C": "減",
+    # "N": "抵",
+    # "O": "空",
+    # "J": "婚",
+    # "X": "產前",
+    # "M": "娩",
+    "K": "陪產假",
+    "Y": "流產假",
+    "Z": "育嬰假",
+    "W": "生理假",
+    "9": "其他",
+    "F": "新冠",
+    # "A": "跨",
+}
+
+
+def get_short_absence_reason_str(reason_code: str) -> str:
+    if reason_code is None:
+        return ""
+
+    return ABSENCE_SHORT_REASON[reason_code]
+
+
+def get_long_absence_reason_str(reason_code: str) -> str:
+    if reason_code is None:
+        return ""
+
+    return ABSENCE_LONG_REASON[reason_code]

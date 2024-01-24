@@ -1,0 +1,126 @@
+{% from utils.htmlgen import get_short_absence_reason_str, get_long_absence_reason_str %}
+{% import datetime %}
+
+{% set week_to_chinese_str = ["一", "二", "三", "四", "五", "六", "日"] %}
+
+<style>
+table.highlight {
+    td:first-child, th:first-child {
+        position:sticky;
+        left:0; /* 首行永遠固定於左 */
+        z-index:1;
+        background-color:lightpink;
+    }
+}
+
+table.highlight thead tr th {
+    position:sticky;
+    top:0; /* 列首永遠固定於上 */
+}
+
+table.highlight th:first-child {
+    z-index:2;
+    background-color:lightblue;
+}
+</style>
+
+<script>
+    function init() {
+        document.getElementById("absence_select").addEventListener('change', event => {
+            let url = '/board/absence/?';
+            const [year, seme] = event.target.value.split(",");
+
+            if (year === "-1" || seme === "-1") {
+                return;
+            }
+
+            url += `&year=${year}`;
+            url += `&seme=${seme}`;
+
+            route.go(url);
+        });
+    }
+
+    init();
+</script>
+
+<div class="row">
+    <select class="form-select my-3 col-12" id="absence_select">
+        <option value="-1,-1">請選擇學期</option>
+        {% for score_obj in item_ids %}
+            <option value="{{ f"{score_obj['year']},{score_obj['seme']}" }}" 
+                {% if year is not None and seme is not None and int(year) == int(score_obj['year']) and int(seme) == int(score_obj['seme']) %} 
+                    selected 
+                {% end %}
+            >
+                {% if score_obj["seme"] == 1 %}
+                    {% set str_seme = "上" %}
+                {% else %}
+                    {% set str_seme = "下" %}
+                {% end %}
+                {{ f"{score_obj['year']} {str_seme} " }}
+            </option>
+        {% end %}
+    </select>
+
+
+    {% if absences is not None %}
+
+    {% if stats is not None %} 
+    <table class="table table-light table-responsive col-12 mx-lg-3 my-3">
+        <thead>
+            <tr>
+                {% for k in stats.keys() %}
+                    <th scope="col">{{ get_long_absence_reason_str(k) }}</th>
+                {% end %}
+            </tr>
+        </thead>
+         
+        <tbody>
+            <tr>
+                {% for v in stats.values() %}
+                    <td>{{ v }}</td>
+                {% end %}
+            </tr>
+        </tbody>
+    </table>
+    {% end %}
+    
+    <div class="table-responsive should-not-open-menu-by-swipe">
+        <table class="table table-bordered table-light table-responsive col-12 mx-lg-3 my-3 highlight">
+            <thead>
+                <tr>
+                    <th scope="col">
+                        <span>年</span> 
+                        <span>月</span> 
+                        <span>日</span> 
+                        <span>星期</span>
+                    </th>
+                    {% for absence in absences %}
+                        {% set d = list(map(int, absence["date"].split("/"))) %}
+                        {% set weekday = datetime.date(d[0], d[1], d[2]).weekday() %}
+                        <th scope="col">
+                            <span>{{ d[0] }}</span>
+                            <span>{{ d[1] }}</span>
+                            <span>{{ d[2] }}</span>
+                            <span>{{ week_to_chinese_str[weekday] }}</span>
+                        </th>
+                    {% end %}
+                </tr>
+            </thead>
+            
+            {% set ts = ["早", "朝會", "一", "二", "三", "四", "午休", "五", "六", "七", "八"] %}
+            <tbody>
+                {% for i, t in enumerate(ts) %}
+                <tr>
+                    <td>{{ t }}</td>
+                    {% for absence in absences %}
+                        <td>{{ get_short_absence_reason_str(absence["absences"][i]) }}</td>
+                    {% end %}
+                </tr>
+                {% end %}
+            </tbody>
+        </table>
+    </div>
+    {% end %}
+</div>
