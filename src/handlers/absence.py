@@ -34,6 +34,7 @@ class AbsenceHandler(RequestHandler):
             "year": std["syear"],
             "seme": std["seme"]
         } for std in std_seme_view]
+        item_ids.sort(key=lambda std: (std["year"], std["seme"]))
 
         absences, stats = None, None
         if year is not None and seme is not None:
