@@ -52,7 +52,7 @@ class AbsenceHandler(RequestHandler):
                 stats = collections.defaultdict(int)
                 for absence in absences:
                     for lesson in absence["absences"]:
-                        if lesson is None:
+                        if lesson is None or lesson == "":
                             continue
 
                         stats[lesson] += 1

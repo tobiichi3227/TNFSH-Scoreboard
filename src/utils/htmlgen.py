@@ -34,6 +34,7 @@ def get_reward_chinese_str(reward) -> str:
 
 
 ABSENCE_SHORT_REASON = {
+    "": "",
     "1": "曠",
     "2": "事",
     "3": "病",
@@ -83,14 +84,14 @@ ABSENCE_LONG_REASON = {
 
 
 def get_short_absence_reason_str(reason_code: str) -> str:
-    if reason_code is None:
+    if reason_code is None or reason_code == "":
         return ""
 
     return ABSENCE_SHORT_REASON[reason_code]
 
 
 def get_long_absence_reason_str(reason_code: str) -> str:
-    if reason_code is None:
+    if reason_code is None or reason_code == "":
         return ""
 
     return ABSENCE_LONG_REASON[reason_code]
