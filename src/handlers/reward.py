@@ -47,9 +47,10 @@ class RewardHandler(RequestHandler):
                     rewards = list(group)
                     break
 
-            for reward in rewards:
-                for i in range(6):
-                    stats[i] += reward["rewards"][i]
+            if rewards is not None:
+                for reward in rewards:
+                    for i in range(6):
+                        stats[i] += reward["rewards"][i]
 
         await self.render("reward.html", item_ids=item_ids, rewards=rewards, stats=stats,
                           year=year, seme=seme)
