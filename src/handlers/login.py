@@ -1,4 +1,5 @@
 import json
+import time
 import base64
 
 import config
@@ -7,7 +8,6 @@ from utils.validate import get_validate_code
 from handlers.base import RequestHandler, reqenv
 from services.api import get_student_info, get_validate_pic
 from services.login import LoginService, LoginPayload
-from services.session import SessionService
 
 
 class LoginHandler(RequestHandler):
@@ -54,29 +54,39 @@ class LoginHandler(RequestHandler):
                 sch_no=config.SCHNO
             )
 
-            err, session_key = await LoginService.inst.get_session_key(payload)
+            err, session_id = await LoginService.inst.get_session_key(payload)
             if err != Success:
                 await self.error(err)
                 return
 
-            err, info = await get_student_info(session_key)
+            err, info = await get_student_info(session_id)
             if err != Success:
                 await self.error(err)
                 return
 
-            SessionService.inst.create_session(session_key, info["studentId"], info["name"])
-            self.set_secure_cookie("session_id", session_key, path="/board", httponly=True)
+            self.setup_cookies(session_id, str(info["studentId"]), info["name"])
+
             await self.success()
 
         elif reqtype == "logout":
-            session_id = self.get_argument("session_id")
-            err, _ = SessionService.inst.remove_session(session_id)
-
-            if err != Success:
-                pass
-
-            self.clear_cookie("session_id", path="/board")
+            self.remove_cookies()
             await self.success()
+
+    def setup_cookies(self, session_id: str, student_id: str, student_name: str):
+        COOKIE_ARGS = {
+            "expires": 30 * 60 + time.time(),  # https://www.cnblogs.com/apexchu/p/4363250.html
+            "path": "/board",
+            "httponly": True,
+        }
+
+        self.set_secure_cookie("session_id", session_id, **COOKIE_ARGS)
+        self.set_secure_cookie("student_id", student_id, **COOKIE_ARGS)
+        self.set_secure_cookie("student_name", student_name, **COOKIE_ARGS)
+
+    def remove_cookies(self):
+        self.clear_cookie("session_id", path="/board")
+        self.clear_cookie("student_id", path="/board")
+        self.clear_cookie("student_name", path="/board")
 
 
 class ValidateHandler(RequestHandler):

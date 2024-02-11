@@ -11,10 +11,8 @@ class Service:
 
 def init_service():
     import utils
-    from services.session import SessionService
     from services.login import LoginService
 
     utils.logger.info("Service Init")
 
-    Service.Session = SessionService()
     Service.Login = LoginService()
