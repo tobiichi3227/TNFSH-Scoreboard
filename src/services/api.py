@@ -372,3 +372,24 @@ async def get_absence_record(session_key: str) -> ReturnType:
     } for obj in res["dataRows"]]
 
     return Success, absences
+
+
+@timeout_handle
+async def update_password(session_key: str, original_password: str, new_password: str,
+                          confirm_new_password: str) -> ReturnType:
+    data = {
+        "session_key": session_key,
+        "oldpd": original_password,
+        "newpd": new_password,
+        "agnpd": confirm_new_password
+    }
+    async with client_session.post(f"{const.MAIN_URL}/changecheck.action", data=data) as resp:
+        if not resp.ok:
+            return RemoteServerError, None
+
+        res = await resp.json(loads=orjson.loads)
+
+    if res["parameterMap"] and res["parameterMap"]["status"] == 200 and res["message"] is None:
+        res["message"] = "S"
+
+    return Success, res["message"]

@@ -188,14 +188,22 @@
                 </li>
             </ul>
             <ul class="nav nav-pills flex-column">
+                {% if session.student_name != "" %}
                 <li class="nav-item">
-                    {% if session.student_name != "" %}
                     <a class="nav-link">
                         <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><circle cx="12" cy="7" r="4"></circle><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path></svg>
                         <span>{{ session.student_name }}</span>
                     </a>
-                    {% end %}
                 </li>
+
+                <li class="nav-item">
+                    <a class="nav-link resetpw" aria-current="page" href="/board/resetpw/">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-password" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 10v4" /><path d="M10 13l4 -2" /><path d="M10 11l4 2" /><path d="M5 10v4" /><path d="M3 13l4 -2" /><path d="M3 11l4 2" /><path d="M19 10v4" /><path d="M17 13l4 -2" /><path d="M17 11l4 2" /></svg>
+                        <span>修改密碼</span>
+                    </a>
+                </li>
+                {% end %}
+                
                 <li class="nav-item login">
                     <a
                             class="nav-link login"
