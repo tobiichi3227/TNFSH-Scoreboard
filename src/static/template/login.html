@@ -110,6 +110,8 @@
                     } else if (res === "Eremote") {
                         wrapper.innerHTML = get_response_message_div('校務系統出現異常，目前無法登入');
 
+                    } else if (res === "Eneedresetpw") { 
+                        route.go('/board/resetpw');
                     } else {
                         change_validate_code();
                         wrapper.innerHTML = get_response_message_div('帳號或密碼或驗證碼錯誤');

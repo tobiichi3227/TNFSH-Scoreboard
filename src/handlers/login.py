@@ -3,7 +3,7 @@ import time
 import base64
 
 import config
-from utils.error import Success, WrongValidateCodeError
+from utils.error import Success, WrongValidateCodeError, NeedResetPasswordError
 from utils.validate import get_validate_code
 from handlers.base import RequestHandler, reqenv
 from services.api import get_student_info, get_validate_pic
@@ -55,7 +55,12 @@ class LoginHandler(RequestHandler):
             )
 
             err, session_id = await LoginService.inst.get_session_key(payload)
-            if err != Success:
+
+            need_reset_pw = False
+            if err == NeedResetPasswordError:
+                need_reset_pw = True
+
+            elif err != Success:
                 await self.error(err)
                 return
 
@@ -66,7 +71,10 @@ class LoginHandler(RequestHandler):
 
             self.setup_cookies(session_id, str(info["studentId"]), info["name"])
 
-            await self.success()
+            if need_reset_pw:
+                await self.error(NeedResetPasswordError)
+            else:
+                await self.success()
 
         elif reqtype == "logout":
             self.remove_cookies()

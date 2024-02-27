@@ -6,7 +6,7 @@ import const
 from services.service import client_session
 from services.utils import timeout_handle
 from utils.error import ReturnType, Success, \
-    RemoteServerError, WrongPasswordOrAccountError, WrongTooManyTimesError, WrongValidateCodeError, Error
+    RemoteServerError, WrongPasswordOrAccountError, WrongTooManyTimesError, WrongValidateCodeError, NeedResetPasswordError, Error
 
 user_agent = UserAgent()
 
@@ -79,6 +79,7 @@ class LoginService:
         i = html.find("name=\'session_key\' value=") + 26
         j = html.find("\'", i)
 
+
         # The session key len must equal to 36
         if j - i != 36:
             # Wrong Password or account or validate
@@ -91,6 +92,10 @@ class LoginService:
 
             elif html.find("錯誤次數過多") != -1:
                 error = WrongTooManyTimesError
+
+            elif html.find("變更密碼") != -1:
+                print(html)
+                error = NeedResetPasswordError
 
             return error, None
 
