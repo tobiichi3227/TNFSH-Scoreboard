@@ -62,6 +62,14 @@ class _WrongTooManyTimesError(_Error):
 WrongTooManyTimesError = _WrongTooManyTimesError()
 
 
+class _NeedResetPasswordError(_Error):
+    def __str__(self):
+        return "Eneedresetpw"
+
+
+NeedResetPasswordError = _NeedResetPasswordError()
+
+
 class _WrongParamError(_Error):
     def __str__(self):
         return "Eparam"
@@ -83,6 +91,5 @@ class _UnknownError(_Error):
 
 
 UnknownError = _UnknownError
-
 
 ReturnType = tuple[_Error, Any]

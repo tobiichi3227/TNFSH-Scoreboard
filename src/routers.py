@@ -1,5 +1,6 @@
 from handlers.index import IndexHandler, AboutHandler, InfoHandler
 from handlers.login import LoginHandler, ValidateHandler
+from handlers.resetpw import ResetPasswordHandler
 from handlers.exam import ExamHandler
 from handlers.term import TermHandler
 from handlers.reward import RewardHandler
@@ -15,6 +16,7 @@ def get_routers():
 
         ("/login", LoginHandler),
         ("/validate", ValidateHandler),
+        ("/resetpw", ResetPasswordHandler),
 
         ("/exam", ExamHandler),
         ("/term", TermHandler),

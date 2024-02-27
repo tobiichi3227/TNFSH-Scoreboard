@@ -13,12 +13,23 @@ from services.login import LoginService, LoginPayload
 class LoginHandler(RequestHandler):
     @reqenv
     async def get(self):
+        if self.session is not None:
+            await self.finish("""
+            你已經登入了
+            <script>
+                setTimeout(() => {
+                    route.go('/board/info/');
+                }, 1500);
+            </script> 
+            """)
+            return
+
         await self.render("login.html")
 
     @reqenv
     async def post(self):
         reqtype = self.get_argument("reqtype")
-        if reqtype == "login":
+        if reqtype == "login" and self.session is None:
             username = self.get_argument("username")
             password = self.get_argument("password")
             validate_code = self.get_argument("validate_code")
