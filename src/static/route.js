@@ -64,7 +64,7 @@ var route = new function() {
     this.curr_url = null;
     this.prev_url = null;
     this.main_navbar = null;
-    
+
     this.init_ui = function() {
         let session_id = document.getElementById("indexjs").getAttribute('session_id');
         this.main_navbar = document.getElementById('main-navbar');
@@ -84,7 +84,7 @@ var route = new function() {
         } else {
             this.main_navbar.querySelector('.nav-link.login').style.display = 'block';
         }
-    }    
+    }
 
     this.go = (url) => {
         window.history.pushState(null, document.title, url);
@@ -120,7 +120,7 @@ var route = new function() {
             } else {
                 args = `${parts[1]}&cache=${new Date().getTime()}`
             }
-            
+
 
             let request_url = `/board/be/${req_path}?${args}`;
             get(request_url).then(response => {
@@ -157,8 +157,7 @@ var route = new function() {
                 };
 
                 routerView.innerHTML = html;
-                
-                // callback();
+
                 if (document.readyState === 'complete' || document.readyState !== 'loading') {
                     setTimeout(function() {
                         callback();
@@ -166,11 +165,9 @@ var route = new function() {
                 } else {
                     let handler = function() {
                         document.removeEventListener('DOMContentLoaded', handler, false);
-                        // window.removeEventListener('load', handler, false);
                         callback();
                     }
                     document.addEventListener('DOMContentLoaded', handler, false);
-                    // window.addEventListener('load', handler, false);
                 }
             });
         }

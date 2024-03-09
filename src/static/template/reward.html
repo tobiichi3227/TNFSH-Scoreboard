@@ -24,9 +24,9 @@
     <select class="form-select my-3 col-12" id="reward_select">
         <option value="-1,-1">請選擇學期</option>
         {% for score_obj in item_ids %}
-            <option value="{{ f"{score_obj['year']},{score_obj['seme']}" }}" 
-                {% if year is not None and seme is not None and int(year) == int(score_obj['year']) and int(seme) == int(score_obj['seme']) %} 
-                    selected 
+            <option value="{{ f"{score_obj['year']},{score_obj['seme']}" }}"
+                {% if year is not None and seme is not None and int(year) == int(score_obj['year']) and int(seme) == int(score_obj['seme']) %}
+                    selected
                 {% end %}
             >
                 {% if score_obj["seme"] == 1 %}
@@ -55,7 +55,7 @@
 
         <tbody>
         <tr>
-            <td scope="row">{{ f"{stats[0]}支" }}</td>
+            <td>{{ f"{stats[0]}支" }}</td>
             <td>{{ f"{stats[1]}支" }}</td>
             <td>{{ f"{stats[2]}支" }}</td>
             <td>{{ f"{stats[3]}支" }}</td>
@@ -64,7 +64,7 @@
         </tr>
         </tbody>
     </table>
-    
+
     <table class="table table-responsive-sm col-12 mx-lg-3 my-3">
         <thead>
             <tr>
@@ -79,7 +79,7 @@
         <tbody>
         {% for reward in rewards %}
             <tr>
-                <td scope="row">{{ reward["fact"] }}</td>
+                <td>{{ reward["fact"] }}</td>
                 <td>{{ reward["desc"] }}</td>
                 <td>{{ get_reward_chinese_str(reward["rewards"]) }}</td>
                 {% if (cancel := reward["cancel"]) == "" %}

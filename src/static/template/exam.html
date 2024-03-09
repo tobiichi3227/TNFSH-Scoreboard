@@ -36,9 +36,9 @@
     <select class="form-select my-3 col-12" id="exam_select">
         <option value="-1,-1">請選擇段考</option>
         {% for score_obj in item_ids %}
-            <option value="{{ f"{score_obj['stdSemeId']},{score_obj['itemId']}" }}" 
-                {% if item_id is not None and std_seme_id is not None and int(item_id) == int(score_obj['itemId']) and int(std_seme_id) == score_obj['stdSemeId'] %} 
-                    selected 
+            <option value="{{ f"{score_obj['stdSemeId']},{score_obj['itemId']}" }}"
+                {% if item_id is not None and std_seme_id is not None and int(item_id) == int(score_obj['itemId']) and int(std_seme_id) == score_obj['stdSemeId'] %}
+                    selected
                 {% end %}
             >
                 {% if score_obj["seme"] == 1 %}
@@ -68,9 +68,9 @@
         <tbody>
             <tr>
                 {% if (score_sum := stats["score_sum"]) == "" %}
-                    <td scope="row">尚未公佈</td>
+                    <td>尚未公佈</td>
                 {% else %}
-                    <td scope="row">{{ score_sum }}</td>
+                    <td>{{ score_sum }}</td>
                 {% end %}
 
                 {% if (average := stats["average"]) != "" %}
@@ -102,7 +102,7 @@
     </table>
     {% end %}
 
-    
+
     <table class="table col-12 mx-lg-3 my-3">
         <thead>
             <tr>
@@ -115,7 +115,7 @@
         <tbody>
         {% for score in scores %}
             <tr>
-                <td scope="row">{{ score["subject"] }}</td>
+                <td>{{ score["subject"] }}</td>
 
                 {% if score["is_participated"] != "否" %}
                     <td>缺考</td>
