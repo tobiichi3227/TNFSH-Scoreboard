@@ -77,6 +77,9 @@ class LoginService:
 
         # Get Session Key
         i = html.find("name=\'session_key\' value=") + 26
+        if i == -1:
+            i = html.find("name=\"session_key\" value=") + 26
+            
         j = html.find("\'", i)
 
 
@@ -93,12 +96,10 @@ class LoginService:
             elif html.find("錯誤次數過多") != -1:
                 error = WrongTooManyTimesError
 
-            elif html.find("變更密碼") != -1:
-                print(html)
-                error = NeedResetPasswordError
-
             return error, None
 
         session_key = html[i:j]
+        if html.find("變更密碼") != -1:
+            return NeedResetPasswordError, session_key
 
         return Success, session_key
