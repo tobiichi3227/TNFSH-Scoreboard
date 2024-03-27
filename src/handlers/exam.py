@@ -46,6 +46,8 @@ class ExamHandler(RequestHandler):
                     "exam_name": item["exam_name"]
                 })
 
+        item_ids.sort(key=lambda std: (-std["year"], -std["seme"]))
+
         scores, stats = None, None
         if item_id is not None and std_seme_id is not None:
             err, scores = await get_single_exam_scores(session_id, item_id, std_seme_id)
