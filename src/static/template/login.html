@@ -16,6 +16,19 @@
 
     function get_response_message_div(message) { return `<div class="alert alert-warning alert-dismissible" role="alert"> ${message} </div>` };
 
+    function login() {
+        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            location.href = "/board/exam/";
+            return;
+        }
+
+        if (route.prev_url == null) {
+            location.href = "/board/info/";
+        } else {
+            location.href = route.prev_url;
+        }
+    }
+
     function init() {
         // change_validate_code();
 
@@ -110,8 +123,9 @@
                     } else if (res === "Eremote") {
                         wrapper.innerHTML = get_response_message_div('校務系統出現異常，目前無法登入');
 
-                    } else if (res === "Eneedresetpw") { 
-                        route.go('/board/resetpw');
+                    } else if (res === "Eneedresetpw") {
+                        wrapper.innerHTML = get_response_message_div('校務系統要求180天要更改密碼，但並不影響使用')
+                        setTimeout(() => login(), 2000);
                     } else {
                         change_validate_code();
                         wrapper.innerHTML = get_response_message_div('帳號或密碼或驗證碼錯誤');
@@ -126,16 +140,7 @@
                     form.classList.remove("was-validated");
 
                 } else {
-                    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                        location.href = "/board/exam/";
-                        return;
-                    }
-
-                    if (route.prev_url == null) {
-                        location.href = "/board/info/";
-                    } else {
-                        location.href = route.prev_url;
-                    }
+                    login();
                 }
             });
         });
