@@ -21,6 +21,10 @@
     <title>TNFSH-Scoreboard</title>
 
     <script id="indexjs" session_id="{{ session.session_id }}">
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/board/src/sw.js');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             route.init_ui();
             if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && route.session_id === null && !location.href.includes("login")) {

@@ -28,5 +28,6 @@
     ],
     "start_url": "/board/",
     "display": "standalone",
-    "orientation": "portrait"
+    "orientation": "portrait",
+    "prefer_related_applications": true
 }
