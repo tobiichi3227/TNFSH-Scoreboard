@@ -1,8 +1,26 @@
+from enum import Enum
+from typing import Any
+
 import tornado.template
 import tornado.web
 
 from services.session import Session
-from utils.error import Success
+
+
+class Errors(Enum):
+    General = "E"
+    Success = "S"
+    Exist = "Eexist"
+    Notexist = "Enoext"
+    WrongPasswordOrAccount = "Ewrongpwacct"
+    WrongValidateCode = "Ewrongvalidatecode"
+    WrongTooManyTimes = "Ewrongtoomany"
+    NeedResetPassword = "Eneedresetpw"
+    WrongParam = "Eparam"
+    RemoteServer = "Eremote"
+    Unknown = "Eunk"
+
+
 
 
 class RequestHandler(tornado.web.RequestHandler):
@@ -32,11 +50,11 @@ class RequestHandler(tornado.web.RequestHandler):
 
         await self.finish(data)
 
-    async def error(self, err):
-        await self.finish(str(err))
+    async def error(self, err: Errors):
+        await self.finish(str(err.value))
 
     async def success(self):
-        await self.finish(str(Success))
+        await self.finish(str(Errors.Success.value))
 
 
 def reqenv(func):

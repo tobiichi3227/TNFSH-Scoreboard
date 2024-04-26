@@ -3,10 +3,10 @@ from dataclasses import dataclass
 from fake_useragent import UserAgent
 
 import const
+from handlers.base import Errors
+from services.api import ReturnType
 from services.service import client_session
 from services.utils import timeout_handle
-from utils.error import ReturnType, Success, \
-    RemoteServerError, WrongPasswordOrAccountError, WrongTooManyTimesError, WrongValidateCodeError, NeedResetPasswordError, Error
 
 user_agent = UserAgent()
 
@@ -46,7 +46,7 @@ class LoginService:
 
         async with client_session.get(const.LOGIN_URL) as resp:
             if not resp.ok:
-                return RemoteServerError, None
+                return Errors.RemoteServer, None
 
             html = await resp.text()
 
@@ -55,7 +55,7 @@ class LoginService:
         j = html.find("\"", i)
         form_token = html[i:j]
 
-        return Success, form_token
+        return Errors.Success, form_token
 
     @timeout_handle
     async def get_session_key(self, login_payload: LoginPayload) -> ReturnType:
@@ -72,7 +72,7 @@ class LoginService:
             "User-Agent": user_agent.random
         }) as resp:
             if not resp.ok:
-                return RemoteServerError, None
+                return Errors.RemoteServer, None
             html = await resp.text()
 
         # Get Session Key
@@ -88,18 +88,18 @@ class LoginService:
             # Wrong Password or account or validate
             error = Error
             if html.find("帳號或密碼錯誤") != -1:
-                error = WrongPasswordOrAccountError
+                error = Errors.WrongPasswordOrAccount
 
             elif html.find("驗證碼錯誤") != -1:
-                error = WrongValidateCodeError
+                error = Errors.WrongValidateCode
 
             elif html.find("錯誤次數過多") != -1:
-                error = WrongTooManyTimesError
+                error = Errors.WrongTooManyTimes
 
             return error, None
 
         session_key = html[i:j]
         if html.find("變更密碼") != -1:
-            return NeedResetPasswordError, session_key
+            return Errors.NeedResetPassword, session_key
 
-        return Success, session_key
+        return Errors.Success, session_key

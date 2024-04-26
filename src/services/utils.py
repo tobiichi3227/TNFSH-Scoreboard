@@ -1,4 +1,5 @@
-from utils.error import RemoteServerError, ReturnType
+from handlers.base import Errors
+from services.api import ReturnType
 
 
 def timeout_handle(func):
@@ -6,7 +7,7 @@ def timeout_handle(func):
         try:
             ret: ReturnType = await func(*args, **kwargs)
         except TimeoutError:
-            ret = RemoteServerError, None
+            ret = Errors.RemoteServer, None
 
         return ret
 

@@ -3,9 +3,8 @@ import time
 import base64
 
 import config
-from utils.error import Success, WrongValidateCodeError, NeedResetPasswordError
 from utils.validate import get_validate_code
-from handlers.base import RequestHandler, reqenv
+from handlers.base import RequestHandler, reqenv, Errors
 from services.api import get_student_info, get_validate_pic
 from services.login import LoginService, LoginPayload
 
@@ -38,7 +37,7 @@ class LoginHandler(RequestHandler):
 
             if using_ocr == "true":
                 err, res = await get_validate_pic()
-                if err != Success:
+                if err != Errors.Success:
                     await self.error(err)
 
                 validate_src: str = res["src"]
@@ -49,11 +48,11 @@ class LoginHandler(RequestHandler):
                 validate_code = get_validate_code(base64.b64decode(validate_pic))
 
             if len(validate_code) > 4:
-                await self.error(WrongValidateCodeError)
+                await self.error(Errors.WrongValidateCode)
                 return
 
             err, form_token = await LoginService.inst.get_form_token()
-            if err != Success:
+            if err != Errors.Success:
                 pass
 
             payload = LoginPayload(
@@ -68,22 +67,22 @@ class LoginHandler(RequestHandler):
             err, session_id = await LoginService.inst.get_session_key(payload)
 
             need_reset_pw = False
-            if err == NeedResetPasswordError:
+            if err == Errors.NeedResetPassword:
                 need_reset_pw = True
 
-            elif err != Success:
+            elif err != Errors.Success:
                 await self.error(err)
                 return
 
             err, info = await get_student_info(session_id)
-            if err != Success:
+            if err != Errors.Success:
                 await self.error(err)
                 return
 
             self.setup_cookies(session_id, str(info["studentId"]), info["name"])
 
             if need_reset_pw:
-                await self.error(NeedResetPasswordError)
+                await self.error(Errors.NeedResetPassword)
             else:
                 await self.success()
 
@@ -111,7 +110,7 @@ class LoginHandler(RequestHandler):
 class ValidateHandler(RequestHandler):
     async def get(self):
         err, res = await get_validate_pic()
-        if err != Success:
+        if err != Errors.Success:
             await self.error(err)
             return
 

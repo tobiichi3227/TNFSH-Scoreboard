@@ -1,8 +1,7 @@
 import tornado.web
 
-from handlers.base import RequestHandler, reqenv
+from handlers.base import RequestHandler, reqenv, Errors
 from services.api import get_school_year_data, a0410S_StdSemeView_select, get_term_scores, get_subject_term_scores
-from utils.error import RemoteServerError
 
 
 class TermHandler(RequestHandler):
@@ -21,7 +20,7 @@ class TermHandler(RequestHandler):
             std_seme_id = None
 
         err, std_seme_view = await a0410S_StdSemeView_select(session_id, self.session.student_id)
-        if err == RemoteServerError:
+        if err == Errors.RemoteServer:
             await self.render("remote-server-error.html")
             return
 
@@ -39,7 +38,7 @@ class TermHandler(RequestHandler):
             err, subject_scores = await get_subject_term_scores(session_id, std_seme_id)
             err, term_scores = await get_term_scores(session_id, self.session.student_id)
 
-            if err == RemoteServerError:
+            if err == Errors.RemoteServer:
                 await self.render("remote-server-error.html")
                 return
 

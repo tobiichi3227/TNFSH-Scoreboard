@@ -3,9 +3,8 @@ import itertools
 
 import tornado
 
-from handlers.base import reqenv, RequestHandler
+from handlers.base import reqenv, RequestHandler, Errors
 from services.api import a0410S_StdSemeView_select, get_absence_record
-from utils.error import RemoteServerError
 
 
 class AbsenceHandler(RequestHandler):
@@ -26,7 +25,7 @@ class AbsenceHandler(RequestHandler):
             seme = None
 
         err, std_seme_view = await a0410S_StdSemeView_select(session_id, self.session.student_id)
-        if err == RemoteServerError:
+        if err == Errors.RemoteServer:
             await self.render("remote-server-error.html")
             return
 
@@ -39,7 +38,7 @@ class AbsenceHandler(RequestHandler):
         absences, stats = None, None
         if year is not None and seme is not None:
             err, r = await get_absence_record(session_id)
-            if err == RemoteServerError:
+            if err == Errors.RemoteServer:
                 await self.render("remote-server-error.html")
                 return
 

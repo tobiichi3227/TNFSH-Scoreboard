@@ -1,8 +1,7 @@
 import tornado.web
 
-from handlers.base import RequestHandler, reqenv
+from handlers.base import RequestHandler, reqenv, Errors
 from services.api import update_password
-from utils.error import Success
 
 
 class ResetPasswordHandler(RequestHandler):
@@ -28,7 +27,7 @@ class ResetPasswordHandler(RequestHandler):
             confirm_new_pw = self.get_argument("confirm_new_pw")
 
             err, msg = await update_password(self.session.session_id, current_pw, new_pw, confirm_new_pw)
-            if err != Success:
+            if err != Errors.Success:
                 await self.error(err)
                 return
 

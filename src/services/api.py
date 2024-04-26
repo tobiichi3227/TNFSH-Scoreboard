@@ -1,13 +1,14 @@
 import base64
-from typing import Tuple, Any
+from typing import Any
 
 import orjson
 
 import const
-from utils.error import ReturnType, Success, RemoteServerError
+from handlers.base import Errors
 from services.service import client_session
 from services.utils import timeout_handle
 
+ReturnType = tuple[Errors, Any]
 
 def get_optional_str(obj):
     if obj is None:
@@ -20,10 +21,10 @@ def get_optional_str(obj):
 async def get_validate_pic() -> ReturnType:
     async with client_session.post(const.VALIDATE_URL) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json()
-        return Success, {
+        return Errors.Success, {
             "picture": res["src"],
             "src": res["validateSrc"],
         }
@@ -45,7 +46,7 @@ async def get_student_info(session_key: str) -> ReturnType:
 
     async with client_session.post(const.INDEX_URL, data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.text()
 
@@ -53,7 +54,7 @@ async def get_student_info(session_key: str) -> ReturnType:
     j = res.find("<", i)
 
     tmp = orjson.loads(base64.b64decode(res[i:j]).decode("utf-8"))
-    return Success, {
+    return Errors.Success, {
         "studentId": tmp["childId"],
         "name": tmp["name"]
     }
@@ -79,13 +80,13 @@ async def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Re
 
     async with client_session.post(f"{const.MAIN_URL}/A0410S_ItemScoreStat_select.action", data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
 
     # stats not publish
     if len(res["dataRows"]) == 0:
-        return Success, {
+        return Errors.Success, {
             "class_rank": "",
             "class_cnt": "",
             "group_rank": "",
@@ -97,7 +98,7 @@ async def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Re
         }
 
     r = res["dataRows"][0]
-    return Success, {
+    return Errors.Success, {
         "class_rank": r.get("orderC", ""),
         "class_cnt": r.get("pnmC", ""),
         "group_rank": r.get("orderS", ""),
@@ -127,11 +128,11 @@ async def a0410S_StdSemeView_select(session_key: str, std_id: str) -> ReturnType
 
     async with client_session.post(f"{const.MAIN_URL}/A0410S_StdSemeView_select.action", data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
 
-    return Success, [{
+    return Errors.Success, [{
         "stdSemeId": obj["id"],
         "syear": obj["syear"],
         "seme": obj["seme"],
@@ -163,11 +164,11 @@ async def get_school_year_data(session_key: str, year: int = None, seme: int = N
 
     async with client_session.post(f"{const.MAIN_URL}/A0410S_Item_select.action", data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
 
-    return Success, [{
+    return Errors.Success, [{
         "itemId": obj["id"],
         "year": obj["syear"],
         "semester": obj["seme"],
@@ -196,7 +197,7 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
 
     async with client_session.post(f"{const.MAIN_URL}/A0410S_OpenItemScoreView_selectA0410s.action", data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
 
@@ -208,7 +209,7 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
         "is_participated": score_obj["noExamMark"],
     } for score_obj in res["dataRows"]]
 
-    return Success, scores
+    return Errors.Success, scores
 
 
 @timeout_handle
@@ -230,7 +231,7 @@ async def get_term_scores(session_key: str, student_id: str) -> ReturnType:
 
     async with client_session.post(f"{const.MAIN_URL}/A0410S_StdSemeView_select.action", data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
 
@@ -243,7 +244,7 @@ async def get_term_scores(session_key: str, student_id: str) -> ReturnType:
         "total_observed_credits_sum": score_obj["credAdd"],
     } for score_obj in res["dataRows"]]
 
-    return Success, scores
+    return Errors.Success, scores
 
 
 @timeout_handle
@@ -264,7 +265,7 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
 
     async with client_session.post(f"{const.MAIN_URL}/A0410S_OpenStdView_selectA0410s.action", data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
 
@@ -280,7 +281,7 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
         "class_average": get_optional_str(score_obj.get("yl"))
     } for score_obj in res["dataRows"]]
 
-    return Success, scores
+    return Errors.Success, scores
 
 
 def _get_rewards(reward_obj) -> tuple[int, int, int, int, int, int]:
@@ -310,7 +311,7 @@ async def get_rewards_record(session_key: str) -> ReturnType:
 
     async with client_session.post(f"{const.MAIN_URL}/B0305S_Reward_select.action", data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
 
@@ -324,7 +325,7 @@ async def get_rewards_record(session_key: str) -> ReturnType:
         "cancel_date": obj["cancelDt"],
     } for obj in res["dataRows"]]
 
-    return Success, rewards
+    return Errors.Success, rewards
 
 
 def _get_absences(absence_obj):
@@ -360,7 +361,7 @@ async def get_absence_record(session_key: str) -> ReturnType:
 
     async with client_session.post(f"{const.MAIN_URL}/B0209S_Absence_select.action", data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
 
@@ -371,7 +372,7 @@ async def get_absence_record(session_key: str) -> ReturnType:
         "absences": _get_absences(obj),
     } for obj in res["dataRows"]]
 
-    return Success, absences
+    return Errors.Success, absences
 
 
 @timeout_handle
@@ -385,11 +386,11 @@ async def update_password(session_key: str, original_password: str, new_password
     }
     async with client_session.post(f"{const.MAIN_URL}/changecheck.action", data=data) as resp:
         if not resp.ok:
-            return RemoteServerError, None
+            return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
 
     if res["parameterMap"] and res["parameterMap"]["status"] == 200 and res["message"] is None:
         res["message"] = "S"
 
-    return Success, res["message"]
+    return Errors.Success, res["message"]

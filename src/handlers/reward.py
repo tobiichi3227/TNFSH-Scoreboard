@@ -2,9 +2,8 @@ import itertools
 
 import tornado.web
 
-from handlers.base import RequestHandler, reqenv
+from handlers.base import RequestHandler, reqenv, Errors
 from services.api import a0410S_StdSemeView_select, get_rewards_record
-from utils.error import RemoteServerError
 
 
 class RewardHandler(RequestHandler):
@@ -25,7 +24,7 @@ class RewardHandler(RequestHandler):
             seme = None
 
         err, std_seme_view = await a0410S_StdSemeView_select(session_id, self.session.student_id)
-        if err == RemoteServerError:
+        if err == Errors.RemoteServer:
             await self.render("remote-server-error.html")
             return
 
@@ -39,7 +38,7 @@ class RewardHandler(RequestHandler):
         if year is not None and seme is not None:
             stats = [0] * 6
             err, r = await get_rewards_record(session_id)
-            if err == RemoteServerError:
+            if err == Errors.RemoteServer:
                 await self.render("remote-server-error.html")
                 return
 
