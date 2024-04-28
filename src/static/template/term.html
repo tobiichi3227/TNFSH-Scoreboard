@@ -98,10 +98,13 @@
         {% for score in subject_scores %}
             <tr>
                 <th scope="row">{{ score["subject"] }}</th>
+                {% set s = score["score"] %}
                 <td>{{ score["course_type"] }}</td>
-                <td>{{ score["credits"] }}</td>
+                <td {% if s != "" and int(s) < 60 %} {{ get_color_style_html("#dc3545") }} {% end %}>
+                    {{ score["credits"] }}
+                </td>
 
-                {% if (s := score["score"]) == "" %}
+                {% if s == "" %}
                     <td>尚未公佈</td>
                 {% else %}
                     <td {% if int(s) < 60 %} {{ get_color_style_html("#dc3545") }} {% end %}>{{ s }}</td>
