@@ -8,6 +8,14 @@ from handlers.base import RequestHandler, reqenv, Errors
 from services.api import get_student_info, get_validate_pic
 from services.login import LoginService, LoginPayload
 
+COOKIE_ITEMS = {
+    "session_id": None,
+    "student_id": None,
+    "student_name": None,
+    "student_class_number": None,
+    "student_seat_number": None,
+}
+
 
 class LoginHandler(RequestHandler):
     @reqenv
@@ -79,7 +87,12 @@ class LoginHandler(RequestHandler):
                 await self.error(err)
                 return
 
-            self.setup_cookies(session_id, str(info["studentId"]), info["name"])
+            COOKIE_ITEMS["session_id"] = session_id
+            COOKIE_ITEMS["student_id"] = info["studentId"]
+            COOKIE_ITEMS["student_name"] = info["name"]
+            COOKIE_ITEMS["student_class_number"] = info["class_number"]
+            COOKIE_ITEMS["student_seat_number"] = info["seat_number"]
+            self.setup_cookies()
 
             if need_reset_pw:
                 await self.error(Errors.NeedResetPassword)
@@ -90,21 +103,21 @@ class LoginHandler(RequestHandler):
             self.remove_cookies()
             await self.success()
 
-    def setup_cookies(self, session_id: str, student_id: str, student_name: str):
+    def setup_cookies(self):
         COOKIE_ARGS = {
             "expires": 30 * 60 + time.time(),  # https://www.cnblogs.com/apexchu/p/4363250.html
             "path": "/board",
             "httponly": True,
         }
 
-        self.set_secure_cookie("session_id", session_id, **COOKIE_ARGS)
-        self.set_secure_cookie("student_id", student_id, **COOKIE_ARGS)
-        self.set_secure_cookie("student_name", student_name, **COOKIE_ARGS)
+        for k, v in COOKIE_ITEMS.items():
+            self.set_secure_cookie(k, str(v), **COOKIE_ARGS)
+            COOKIE_ITEMS[k] = None
 
     def remove_cookies(self):
-        self.clear_cookie("session_id", path="/board")
-        self.clear_cookie("student_id", path="/board")
-        self.clear_cookie("student_name", path="/board")
+        for k in COOKIE_ITEMS.keys():
+            self.clear_cookie(k, path="/board")
+            COOKIE_ITEMS[k] = None
 
 
 class ValidateHandler(RequestHandler):

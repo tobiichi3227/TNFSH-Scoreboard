@@ -52,9 +52,19 @@ async def get_student_info(session_key: str) -> ReturnType:
     j = res.find("<", i)
 
     tmp = orjson.loads(base64.b64decode(res[i:j]).decode("utf-8"))
+
+    data["pId"] = tmp["childId"]
+    async with client_session.post(f"{const.MAIN_URL}/B0410S_StdSemeView_select0410.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.json(loads=orjson.loads)
+
     return Errors.Success, {
         "studentId": tmp["childId"],
-        "name": tmp["name"]
+        "name": tmp["name"],
+        "seat_number": res["data"]["seat"],
+        "class_number": res["data"]["clsNo"][3:],
     }
 
 

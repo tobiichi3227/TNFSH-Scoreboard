@@ -21,8 +21,6 @@ class Errors(Enum):
     Unknown = "Eunk"
 
 
-
-
 class RequestHandler(tornado.web.RequestHandler):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -33,12 +31,17 @@ class RequestHandler(tornado.web.RequestHandler):
         session_id = self.get_secure_cookie("session_id")
         student_id = self.get_secure_cookie("student_id")
         student_name = self.get_secure_cookie("student_name")
+        student_class_number = self.get_secure_cookie("student_class_number")
+        student_seat_number = self.get_secure_cookie("student_seat_number")
 
         if session_id is not None:
             session_id = session_id.decode("utf-8")
             student_id = student_id.decode("utf-8")
             student_name = student_name.decode("utf-8")
-            session = Session(session_id, int(student_id), student_name)
+            student_class_number: int = int(student_class_number.decode("utf-8"))
+            student_seat_number: int = int(student_seat_number.decode("utf-8"))
+            session = Session(session_id, int(student_id), student_name,
+                              student_class_number, student_seat_number)
 
         if session is None:
             session = Session.Empty_Session
@@ -63,12 +66,17 @@ def reqenv(func):
         session_id = self.get_secure_cookie("session_id")
         student_id = self.get_secure_cookie("student_id")
         student_name = self.get_secure_cookie("student_name")
+        student_class_number = self.get_secure_cookie("student_class_number")
+        student_seat_number = self.get_secure_cookie("student_seat_number")
 
         if session_id is not None:
             session_id = session_id.decode("utf-8")
             student_id = student_id.decode("utf-8")
             student_name = student_name.decode("utf-8")
-            self.session = Session(session_id, student_id, student_name)
+            student_class_number: int = int(student_class_number.decode("utf-8"))
+            student_seat_number: int = int(student_seat_number.decode("utf-8"))
+            self.session = Session(session_id, int(student_id), student_name,
+                                   student_class_number, student_seat_number)
 
         ret = await func(self, *args, **kwargs)
         return ret
