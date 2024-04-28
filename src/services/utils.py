@@ -1,5 +1,8 @@
+from typing import Any
+
 from handlers.base import Errors
-from services.api import ReturnType
+
+ReturnType = tuple[Errors, Any]
 
 
 def timeout_handle(func):

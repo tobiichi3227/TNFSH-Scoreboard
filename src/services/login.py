@@ -4,9 +4,8 @@ from fake_useragent import UserAgent
 
 import const
 from handlers.base import Errors
-from services.api import ReturnType
 from services.service import client_session
-from services.utils import timeout_handle
+from services.utils import timeout_handle, ReturnType
 
 user_agent = UserAgent()
 

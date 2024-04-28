@@ -1,14 +1,11 @@
 import base64
-from typing import Any
 
 import orjson
 
 import const
 from handlers.base import Errors
 from services.service import client_session
-from services.utils import timeout_handle
-
-ReturnType = tuple[Errors, Any]
+from services.utils import timeout_handle, ReturnType
 
 
 def get_optional_str(obj):
