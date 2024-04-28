@@ -85,7 +85,7 @@ class LoginService:
         # The session key len must equal to 36
         if j - i != 36:
             # Wrong Password or account or validate
-            error = Error
+            error = Errors.General
             if html.find("帳號或密碼錯誤") != -1:
                 error = Errors.WrongPasswordOrAccount
 

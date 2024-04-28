@@ -47,6 +47,7 @@ class LoginHandler(RequestHandler):
                 err, res = await get_validate_pic()
                 if err != Errors.Success:
                     await self.error(err)
+                    return
 
                 validate_src: str = res["src"]
                 validate_pic: str = res["picture"]
