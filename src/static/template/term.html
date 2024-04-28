@@ -104,7 +104,7 @@
                 {% if (s := score["score"]) == "" %}
                     <td>尚未公佈</td>
                 {% else %}
-                    <td {% if int(s) < 60 %} {{ get_color_style_html("red") }} {% end %}>{{ s }}</td>
+                    <td {% if int(s) < 60 %} {{ get_color_style_html("#dc3545") }} {% end %}>{{ s }}</td>
                 {% end %}
 
                 <td>{{ score["score_original"] }}</td>
