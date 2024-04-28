@@ -95,3 +95,14 @@ def get_long_absence_reason_str(reason_code: str) -> str:
         return ""
 
     return ABSENCE_LONG_REASON[reason_code]
+
+
+def get_credit_type_chinese_str(type: str) -> str:
+    TYPE_NAMES = {
+        "all_credit": "應修習學分",
+        "graduation_credit": "畢業學分",
+        "required_courses_credit": "必修學分",
+        "elective_courses_credit": "選修學分",
+    }
+
+    return TYPE_NAMES[type]

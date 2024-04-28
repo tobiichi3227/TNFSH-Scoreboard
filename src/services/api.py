@@ -392,3 +392,39 @@ async def update_password(session_key: str, original_password: str, new_password
         res["message"] = "S"
 
     return Errors.Success, res["message"]
+
+
+def _get_credits_type(t) -> str:
+    if t == "C1":
+        return "all_credit"
+
+    elif t == "C2":
+        return "graduation_credit"
+
+    elif t == "C4":
+        return "required_courses_credit"
+
+    elif t == "C9":
+        return "elective_courses_credit"
+
+
+@timeout_handle
+async def get_graduation_credits(session_key: str, std_seme_id: str) -> ReturnType:
+    data = {
+        "session_key": session_key,
+        "stdSemeId": std_seme_id,
+        "pId": 2,
+    }
+    async with client_session.post(f"{const.MAIN_URL}/A0410S_GradCredit_select.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.json(loads=orjson.loads)
+
+    graduation_credits = {
+        _get_credits_type(obj["areaM"]): {
+            "required_credits": obj["credSum"],
+            "observed_credits": obj["credits"],
+        } for obj in res["dataRows"]}
+
+    return Errors.Success, graduation_credits

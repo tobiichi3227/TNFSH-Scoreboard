@@ -1,0 +1,44 @@
+{% from utils.htmlgen import get_credit_type_chinese_str, get_color_style_html %}
+
+<script>
+    function init() {
+    }
+
+    init();
+</script>
+
+<div class="row">
+    {% if credits is not None %}
+    <div class="mx-lg-3 my-1">
+        <p><span {{ get_color_style_html("#ffc107") }}>黃色</span>表示本學期可以將剩餘的學分修完</p>
+        <p><span {{ get_color_style_html("#dc3545") }}>紅色</span>表示本學期沒辦法將剩餘的學分修完</p>
+        <p>可能是前五個學期學分不夠或是本學期某些學科缺席超過1/3(自己把自己當掉)</p>
+    </div>
+    <table class="table col-12 mx-lg-3">
+        <thead>
+            <tr>
+                <th scope="col">項目</th>
+                <th scope="col">實得學分</th>
+                <th scope="col">標準學分</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for credit_type, credit in credits.items() %}
+        <tr>
+            <td>{{ get_credit_type_chinese_str(credit_type) }}</td> 
+            {% if credit["pass_status"] == 1 %} <!-- 最後一個學期可把剩餘學分修完 -->
+                <td {{ get_color_style_html("#ffc107") }}>{{ credit["observed_credits"] }}</td>
+            {% elif credit["pass_status"] == 2 %} <!-- 最後一個學期沒辦法剩下學分修完 -->
+                <td {{ get_color_style_html("#dc3545") }}>{{ credit["observed_credits"] }}</td>
+            {% else %} <!-- 已經不需要修更多學分了 -->
+                <td>{{ credit["observed_credits"] }}</td>
+            {% end %}
+
+            <td>{{ credit["required_credits"] }}</td>
+        </tr>
+        {% end %}
+        </tbody>
+    </table>
+    {% end %}
+</div>

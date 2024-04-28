@@ -5,6 +5,7 @@ from handlers.exam import ExamHandler
 from handlers.term import TermHandler
 from handlers.reward import RewardHandler
 from handlers.absence import AbsenceHandler
+from handlers.graduation import GraduationCreditsHandler
 
 
 def get_routers():
@@ -22,5 +23,6 @@ def get_routers():
         ("/term", TermHandler),
         ("/reward", RewardHandler),
         ("/absence", AbsenceHandler),
+        ("/graduation", GraduationCreditsHandler),
         # ('/studentcard'),
     ]
