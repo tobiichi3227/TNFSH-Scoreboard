@@ -10,6 +10,7 @@ from services.utils import timeout_handle
 
 ReturnType = tuple[Errors, Any]
 
+
 def get_optional_str(obj):
     if obj is None:
         return ""

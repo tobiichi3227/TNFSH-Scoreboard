@@ -1,7 +1,7 @@
 import tornado.web
 
 from handlers.base import RequestHandler, reqenv, Errors
-from services.api import get_school_year_data, a0410S_StdSemeView_select, get_term_scores, get_subject_term_scores
+from services.api import a0410S_StdSemeView_select, get_term_scores, get_subject_term_scores
 
 
 class TermHandler(RequestHandler):
