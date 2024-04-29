@@ -21,7 +21,7 @@ class TermHandler(RequestHandler):
 
         err, std_seme_view = await a0410S_StdSemeView_select(session_id, self.session.student_id)
         if err == Errors.RemoteServer:
-            await self.render("remote-server-error.html")
+            await self.render_remote_server_err()
             return
 
         item_ids = [
@@ -39,7 +39,7 @@ class TermHandler(RequestHandler):
             err, term_scores = await get_term_scores(session_id, self.session.student_id)
 
             if err == Errors.RemoteServer:
-                await self.render("remote-server-error.html")
+                await self.render_remote_server_err()
                 return
 
             term_scores = list(filter(lambda score: str(score["stdSemeId"]) == std_seme_id, term_scores))

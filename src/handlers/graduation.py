@@ -69,7 +69,7 @@ class GraduationCreditsHandler(RequestHandler):
 
         err, std_seme_view = await a0410S_StdSemeView_select(session_id, self.session.student_id)
         if err == Errors.RemoteServer:
-            await self.render("remote-server-error.html")
+            await self.render_remote_server_err()
             return
 
         credit = None
@@ -78,7 +78,7 @@ class GraduationCreditsHandler(RequestHandler):
         for std in std_seme_view:
             err, credit = await get_graduation_credits(session_id, std["stdSemeId"])
             if err == Errors.RemoteServer:
-                await self.render("remote-server-error.html")
+                await self.render_remote_server_err()
                 return
 
             if credit:
@@ -88,12 +88,12 @@ class GraduationCreditsHandler(RequestHandler):
         if credit is not None:
             err = await self._set_pass_status(credit, std_seme_id)
             if err == Errors.RemoteServer:
-                await self.render("remote-server-error.html")
+                await self.render_remote_server_err()
                 return
 
         err, credits_in_current_seme = await self._get_current_seme_credits(std_seme_id)
         if err == Errors.RemoteServer:
-            await self.render("remote-server-error.html")
+            await self.render_remote_server_err()
             return
 
         await self.render("graduation-credit.html", credits=credit, credits_in_current_seme=credits_in_current_seme)

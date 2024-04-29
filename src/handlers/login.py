@@ -27,7 +27,7 @@ class LoginHandler(RequestHandler):
                 setTimeout(() => {
                     route.go('/board/info/');
                 }, 1500);
-            </script> 
+            </script>
             """)
             return
 
@@ -62,7 +62,8 @@ class LoginHandler(RequestHandler):
 
             err, form_token = await LoginService.inst.get_form_token()
             if err != Errors.Success:
-                pass
+                await self.error(err)
+                return
 
             payload = LoginPayload(
                 login_id=username,

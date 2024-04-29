@@ -59,6 +59,9 @@ class RequestHandler(tornado.web.RequestHandler):
     async def success(self):
         await self.finish(str(Errors.Success.value))
 
+    async def render_remote_server_err(self):
+        await self.render("remote-server-error.html")
+
 
 def reqenv(func):
     async def wrap(self, *args, **kwargs):

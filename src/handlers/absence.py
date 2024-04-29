@@ -26,7 +26,7 @@ class AbsenceHandler(RequestHandler):
 
         err, std_seme_view = await a0410S_StdSemeView_select(session_id, self.session.student_id)
         if err == Errors.RemoteServer:
-            await self.render("remote-server-error.html")
+            await self.render_remote_server_err()
             return
 
         item_ids = [{
@@ -39,7 +39,7 @@ class AbsenceHandler(RequestHandler):
         if year is not None and seme is not None:
             err, r = await get_absence_record(session_id)
             if err == Errors.RemoteServer:
-                await self.render("remote-server-error.html")
+                await self.render_remote_server_err()
                 return
 
             for key, group in itertools.groupby(r, key=lambda obj: (obj["syear"], obj["seme"])):

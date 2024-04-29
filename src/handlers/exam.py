@@ -24,7 +24,7 @@ class ExamHandler(RequestHandler):
 
         err, std_seme_view = await a0410S_StdSemeView_select(session_id, self.session.student_id)
         if err == Errors.RemoteServer:
-            await self.render("remote-server-error.html")
+            await self.render_remote_server_err()
             return
 
         item_ids = []
@@ -33,7 +33,7 @@ class ExamHandler(RequestHandler):
             s_id, year, seme = std["stdSemeId"], std["syear"], std["seme"]
             err, school_year_data = await get_school_year_data(session_id, int(year), int(seme))
             if err == Errors.RemoteServer:
-                await self.render("remote-server-error.html")
+                await self.render_remote_server_err()
                 return
 
             for item in school_year_data:
@@ -53,7 +53,7 @@ class ExamHandler(RequestHandler):
             err, stats = await get_exam_stats(session_id, item_id, std_seme_id)
 
             if err == Errors.RemoteServer:
-                await self.render("remote-server-error.html")
+                await self.render_remote_server_err()
                 return
 
         await self.render("exam.html", item_ids=item_ids, scores=scores, stats=stats,
