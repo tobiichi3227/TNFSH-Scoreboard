@@ -3,6 +3,23 @@ from services.api import a0410S_StdSemeView_select, get_graduation_credits, get_
 
 
 class GraduationCreditsHandler(RequestHandler):
+    async def _get_current_seme_credits(self, std_seme_id):
+        err, subject_scores = await get_subject_term_scores(self.session.session_id, std_seme_id)
+        if err == Errors.RemoteServer:
+            return err, None
+
+        elective_course_credit_in_last_seme = 0
+        required_course_credit_in_last_seme = 0
+        for subject in subject_scores:
+            if subject["course_type"] == "校選":
+                elective_course_credit_in_last_seme += int(subject["credits"])
+            elif subject["course_type"] == "部必":
+                required_course_credit_in_last_seme += int(subject["credits"])
+        return Errors.Success, {
+            "elective_course": elective_course_credit_in_last_seme,
+            "required_course": required_course_credit_in_last_seme,
+        }
+
     async def _set_pass_status(self, credit: dict[str, dict[str, str | int]], std_seme_id):
         observed = int(credit["all_credit"]["observed_credits"])
         required = 150
@@ -18,23 +35,15 @@ class GraduationCreditsHandler(RequestHandler):
             status = 2
         credit["graduation_credit"]["pass_status"] = status
 
-        err, subject_scores = await get_subject_term_scores(self.session.session_id, std_seme_id)
+        err, credits_in_current_seme = await self._get_current_seme_credits(std_seme_id)
         if err == Errors.RemoteServer:
             return err
-
-        elective_course_credit_in_last_seme = 0
-        required_course_credit_in_last_seme = 0
-        for subject in subject_scores:
-            if subject["course_type"] == "校選":
-                elective_course_credit_in_last_seme += int(subject["credits"])
-            elif subject["course_type"] == "部必":
-                required_course_credit_in_last_seme += int(subject["credits"])
 
         observed = credit["required_courses_credit"]["observed_credits"]
         required = credit["required_courses_credit"]["required_credits"]
         if observed >= required:
             status = 0
-        elif required - observed <= required_course_credit_in_last_seme:
+        elif required - observed <= credits_in_current_seme["required_course"]:
             status = 1
         else:
             status = 2
@@ -44,7 +53,7 @@ class GraduationCreditsHandler(RequestHandler):
         required = credit["elective_courses_credit"]["required_credits"]
         if observed >= required:
             status = 0
-        elif required - observed <= elective_course_credit_in_last_seme:
+        elif required - observed <= credits_in_current_seme["elective_course"]:
             status = 1
         else:
             status = 2
@@ -82,4 +91,9 @@ class GraduationCreditsHandler(RequestHandler):
                 await self.render("remote-server-error.html")
                 return
 
-        await self.render("graduation-credit.html", credits=credit)
+        err, credits_in_current_seme = await self._get_current_seme_credits(std_seme_id)
+        if err == Errors.RemoteServer:
+            await self.render("remote-server-error.html")
+            return
+
+        await self.render("graduation-credit.html", credits=credit, credits_in_current_seme=credits_in_current_seme)

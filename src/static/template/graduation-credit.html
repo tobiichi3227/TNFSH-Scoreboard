@@ -13,6 +13,7 @@
         <p><span {{ get_color_style_html("#ffc107") }}>黃色</span>表示本學期可以將剩餘的學分修完</p>
         <p><span {{ get_color_style_html("#dc3545") }}>紅色</span>表示本學期沒辦法將剩餘的學分修完</p>
         <p>可能是前五個學期學分不夠或是本學期某些學科缺席超過1/3(自己把自己當掉)</p>
+        <p>本學期必修學分:{{ credits_in_current_seme["required_course"] }} 校選學分: {{ credits_in_current_seme["elective_course"] }}</p>
     </div>
     <table class="table col-12 mx-lg-3">
         <thead>
