@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 
 from fake_useragent import UserAgent
@@ -74,16 +75,9 @@ class LoginService:
                 return Errors.RemoteServer, None
             html = await resp.text()
 
-        # Get Session Key
-        i = html.find("name=\'session_key\' value=") + 26
-        if i == -1:
-            i = html.find("name=\"session_key\" value=") + 26
-            
-        j = html.find("\'", i)
+        session_key = re.findall(r'<input type=[\'|\"]hidden[\'|\"] name=[\'|\"]session_key[\'|\"] value=[\'|\"](.*?)[\'|\"]\/>', html, re.I)
 
-
-        # The session key len must equal to 36
-        if j - i != 36:
+        if not session_key:
             # Wrong Password or account or validate
             error = Errors.General
             if html.find("帳號或密碼錯誤") != -1:
@@ -97,7 +91,7 @@ class LoginService:
 
             return error, None
 
-        session_key = html[i:j]
+        session_key = session_key[0]
         if html.find("變更密碼") != -1:
             return Errors.NeedResetPassword, session_key
 
