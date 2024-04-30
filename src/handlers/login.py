@@ -43,6 +43,10 @@ class LoginHandler(RequestHandler):
             validate_src = self.get_argument("validate_src")
             using_ocr = self.get_argument("using_ocr")
 
+            if validate_code is None:
+                await self.error(Errors.WrongValidateCode)
+                return
+
             if using_ocr == "true":
                 err, res = await get_validate_pic()
                 if err != Errors.Success:

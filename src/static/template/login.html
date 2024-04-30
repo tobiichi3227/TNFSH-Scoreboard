@@ -33,6 +33,7 @@
         (() => {
             let manual = document.getElementById('manualValidate');
             manual.addEventListener('click', _ => {
+                document.querySelector("#InputValidate").setAttribute('required', '');
                 let section = document.getElementById('validateSection');
                 section.querySelectorAll('.validate').forEach(el => {
                     el.style.display = '';
@@ -40,7 +41,6 @@
                 manual.style.display = 'none';
                 change_validate_code();
             });
-
         })();
 
         document.getElementById('validatePic').addEventListener('click', _ => {
@@ -88,7 +88,6 @@
             let validate_code = form.querySelector('#InputValidate').value;
             let validate_src = form.querySelector("#validatePic").getAttribute('src_src');
             let using_ocr = document.getElementById('manualValidate').style.display !== 'none';
-
 
             post('/board/be/login', {
                 reqtype: 'login',
