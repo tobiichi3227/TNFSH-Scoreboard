@@ -1,7 +1,9 @@
 import base64
 
 import orjson
+from aiohttp import ContentTypeError
 
+import config
 import const
 from handlers.base import Errors
 from services.service import client_session
@@ -441,3 +443,28 @@ async def get_graduation_credits(session_key: str, std_seme_id: str) -> ReturnTy
         } for obj in res["dataRows"]}
 
     return Errors.Success, graduation_credits
+
+
+@timeout_handle
+async def forget_password(account: str, username: str, idnumber: str, birth: str) -> ReturnType:
+    data = f"act={account},name={username},idno={idnumber},schNo={config.SCHNO},typs=s,birth={birth}"
+
+    async with client_session.post(f"{const.MAIN_URL}/Fta.action?a={data}", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        try:
+            res = await resp.json(loads=orjson.loads)
+        except ContentTypeError:
+            return Errors.RemoteServerBlock, None
+
+    err = Errors.General
+    if m := res["parameterMap"]:
+        if m.get("status") == "200":
+            err = Errors.Success
+        elif m["msg"] == "無此帳號":
+            err = Errors.NotExist
+        elif m["msg"].find("空白") != -1:
+            err = Errors.WrongParam
+
+    return err, None

@@ -11,13 +11,14 @@ class Errors(Enum):
     General = "E"
     Success = "S"
     Exist = "Eexist"
-    Notexist = "Enoext"
+    NotExist = "Enoext"
     WrongPasswordOrAccount = "Ewrongpwacct"
     WrongValidateCode = "Ewrongvalidatecode"
     WrongTooManyTimes = "Ewrongtoomany"
     NeedResetPassword = "Eneedresetpw"
     WrongParam = "Eparam"
     RemoteServer = "Eremote"
+    RemoteServerBlock = "Eremoteblock"
     Unknown = "Eunk"
 
 
