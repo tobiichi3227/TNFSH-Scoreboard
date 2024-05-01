@@ -85,7 +85,7 @@ class GraduationCreditsHandler(RequestHandler):
                 std_seme_id = std["stdSemeId"]
                 break
 
-        if credit is not None:
+        if credit:
             err = await self._set_pass_status(credit, std_seme_id)
             if err == Errors.RemoteServer:
                 await self.render_remote_server_err()
