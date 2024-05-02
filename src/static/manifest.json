@@ -1,33 +1,41 @@
 {
-    "short_name": "一中成績查詢系統",
-    "name": "Scoreboard",
-    "description": "一個簡單的成績查詢系統",
-    "background_color": "#1a1b1e",
-    "theme_color": "#1a1b1e",
-    "icons": [
-        {
-            "src": "/board/src/icons/android-chrome-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "/board/src/icons/android-chrome-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png"
-        },
-        {
-            "src": "/board/src/icons/apple-touch-icon.png",
-            "sizes": "180x180",
-            "type": "image/png"
-        },
-        {
-            "src": "/board/src/icons/mstile-270x270.png",
-            "sizes": "270x270",
-            "type": "image/png"
-        }
-    ],
-    "start_url": "/board/",
-    "display": "standalone",
-    "orientation": "portrait",
-    "prefer_related_applications": true
+  "short_name": "一中成績查詢系統",
+  "name": "Scoreboard",
+  "description": "一個簡單的成績查詢系統,讓你不用多次點擊與縮放頁面才能知道成績",
+  "background_color": "#1a1b1e",
+  "theme_color": "#1a1b1e",
+  "icons": [
+    {
+      "src": "/board/src/icons/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/board/src/icons/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/board/src/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "/board/src/icons/mstile-270x270.png",
+      "sizes": "270x270",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/board/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "screenshots": [
+    {
+      "src": "/board/src/pictures/screenshot1.png",
+      "size": "1080x2300",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "label"
+    }
+  ]
 }
