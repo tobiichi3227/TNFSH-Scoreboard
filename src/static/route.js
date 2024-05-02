@@ -1,3 +1,10 @@
+const loading_animation_html = `
+    <div class="text-center align-items-center">
+        <div class="spinner-border text-secondary" role="status" style="width: 10rem; height: 10rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+`;
 function sameOrigin(a, b) {
     // https://stackoverflow.com/questions/31374766/javascript-how-to-check-if-a-url-is-same-origin-as-current-page
     const urlA = new URL(a);
@@ -121,6 +128,8 @@ var route = new function() {
                 args = `${parts[1]}&cache=${new Date().getTime()}`
             }
 
+
+            routerView.innerHTML = loading_animation_html;
 
             let request_url = `/board/be/${req_path}?${args}`;
             get(request_url).then(response => {
