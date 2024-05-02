@@ -3,7 +3,7 @@ import itertools
 import tornado.web
 
 from handlers.base import RequestHandler, reqenv, Errors
-from services.api import a0410S_StdSemeView_select, get_rewards_record
+from services.api import get_all_semester_info, get_rewards_record
 
 
 class RewardHandler(RequestHandler):
@@ -23,7 +23,7 @@ class RewardHandler(RequestHandler):
             year = None
             seme = None
 
-        err, std_seme_view = await a0410S_StdSemeView_select(session_id, self.session.student_id)
+        err, std_seme_view = await get_all_semester_info(session_id, self.session.student_id)
         if err == Errors.RemoteServer:
             await self.render_remote_server_err()
             return

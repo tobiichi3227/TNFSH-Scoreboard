@@ -81,7 +81,7 @@ async def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Re
 
     :param session_key: connection session key
     :param item_id: the exam id from StdSemeView function
-    :param std_seme_id: from StdSemeView function
+    :param std_seme_id: semester id
     :return:
     """
 
@@ -124,13 +124,15 @@ async def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Re
 
 
 @timeout_handle
-async def a0410S_StdSemeView_select(session_key: str, std_id: str) -> ReturnType:
+async def get_all_semester_info(session_key: str, std_id: str) -> ReturnType:
     """
-
+    Get all semester info including semester id, grade, semester year.
+    Semester id is a necessary parameter in many data queries.
 
     :param session_key: connection session key
     :param std_id: student id from student info
-    :return:
+    :return: data for semester info
+    :rtype: list[dict]
     """
 
     data = {
@@ -197,7 +199,7 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
 
     :param session_key: the connection session key
     :param item_id: the exam id from StdSemeView function
-    :param std_seme_id: from StdSemeView function
+    :param std_seme_id: semester id
     :return: List of score data
     :rtype: list[dict]
     """
@@ -266,7 +268,7 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
     Get single term all subject scores
 
     :param session_key: the connection session key
-    :param std_seme_id: from StdSemeView function
+    :param std_seme_id: semester id
     :return: List of all term subject scores
     :rtype: list[dict]
     """
@@ -391,6 +393,15 @@ async def get_absence_record(session_key: str) -> ReturnType:
 @timeout_handle
 async def update_password(session_key: str, original_password: str, new_password: str,
                           confirm_new_password: str) -> ReturnType:
+    """
+    Update password by using 180 days check password api(180天密碼重設).
+
+    :param session_key: the connection session key
+    :param original_password: original password
+    :param new_password: new password
+    :param confirm_new_password: new password repeat
+    :return:
+    """
     data = {
         "session_key": session_key,
         "oldpd": original_password,
@@ -425,6 +436,13 @@ def _get_credits_type(t) -> str:
 
 @timeout_handle
 async def get_graduation_credits(session_key: str, std_seme_id: str) -> ReturnType:
+    """
+    Get all information regarding course credit types for graduation credits.
+
+    :param session_key: the connection session key
+    :param std_seme_id: semester id
+    :return:
+    """
     data = {
         "session_key": session_key,
         "stdSemeId": std_seme_id,
@@ -447,6 +465,16 @@ async def get_graduation_credits(session_key: str, std_seme_id: str) -> ReturnTy
 
 @timeout_handle
 async def forget_password(account: str, username: str, idnumber: str, birth: str) -> ReturnType:
+    """
+    Send forget password request to school server.
+
+    :param account:
+    :param username:
+    :param idnumber: Identity Number
+    :param birth:
+    :return:
+    """
+
     data = f"act={account},name={username},idno={idnumber},schNo={config.SCHNO},typs=s,birth={birth}"
 
     async with client_session.post(f"{const.MAIN_URL}/Fta.action?a={data}", data=data) as resp:
