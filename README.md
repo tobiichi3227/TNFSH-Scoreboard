@@ -10,7 +10,7 @@
 |:---------------------------|:----------------------------:|
 | [Api](src/services/api.py) | API Client for school system |
 | [Backend](src/)            |       Tornado backend        |
-| [Frontend](src/static/)    | Bootstrap5 & jQuery frontend |
+| [Frontend](src/static/)    |     Bootstrap5 frontend      |
 
 ## Contribute ?
-~~I don't know~~
+先到Issues提Bug或Feature，之後在PR上指向之前發的Issue
