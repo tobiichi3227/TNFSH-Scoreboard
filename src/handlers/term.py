@@ -32,6 +32,8 @@ class TermHandler(RequestHandler):
             } for std in std_seme_view
         ]
         item_ids.sort(key=lambda std: (-std["year"], -std["seme"]))
+        if std_seme_id is None:
+            std_seme_id = max(item_ids, key=lambda std: std["stdSemeId"])["stdSemeId"]
 
         subject_scores, term_scores = None, None
         if std_seme_id is not None:
