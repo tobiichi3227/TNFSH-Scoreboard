@@ -1,5 +1,6 @@
 import aiohttp
 
+from services.cache import CacheService
 
 timeout = aiohttp.ClientTimeout(total=20)
 client_session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=5), timeout=timeout)
@@ -16,3 +17,4 @@ def init_service():
     utils.logger.info("Service Init")
 
     Service.Login = LoginService()
+    Service.Cache = CacheService()

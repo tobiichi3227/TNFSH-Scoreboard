@@ -18,6 +18,7 @@ class InfoHandler(RequestHandler):
     async def get(self):
         await self.render("info.html")
 
+
 class PWAInstallationHandler(RequestHandler):
     @reqenv
     async def get(self):

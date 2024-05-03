@@ -1,0 +1,21 @@
+<div class="row">
+    {% if subject_absence_cnts %}
+    <table class="table table-responsive-sm col-12 mx-lg-3 my-3">
+        <thead>
+            <tr>
+                <th scope="col">科目</th>
+                <th scope="col">缺席數</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for subject_name, cnt in sorted(subject_absence_cnts.items(), key=lambda x: -x[1]) %}
+            <tr>
+                <th scope="row">{{ subject_name }}</th> 
+                <td>{{ cnt }}</td>
+            </tr>
+        {% end %}
+        </tbody>
+    </table>
+    {% end %}
+</div>

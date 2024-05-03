@@ -1,11 +1,13 @@
 import base64
 
+import bs4
 import orjson
 from aiohttp import ContentTypeError
 
 import config
 import const
 from handlers.base import Errors
+from services.cache import CacheService
 from services.service import client_session
 from services.utils import timeout_handle, ReturnType
 
@@ -496,3 +498,61 @@ async def forget_password(account: str, username: str, idnumber: str, birth: str
             err = Errors.WrongParam
 
     return err, None
+
+
+def _parse_tr(section_tr: bs4.Tag, section_number: int, curriculum: dict[int, str]):
+    for (weekday, course_td) in enumerate(section_tr.select("td")[2:]):
+        teacher_texts = []
+        for a in course_td.select('a'):
+            if a is not None:
+                teacher_texts.append(a.text.strip())
+
+        course_name = ""
+        for t in course_td.text.strip().split("\n"):
+            if t in teacher_texts or t == "":
+                continue
+            for name in teacher_texts:
+                t = t.replace(name, '')
+
+            course_name += t
+
+        course_name = course_name.strip().replace(u'\xa0', '')  # remove html nbsp
+        if course_name == "":
+            continue
+
+        curriculum[(weekday + 1) * 10 + (section_number + 1)] = course_name
+
+
+async def get_curriculum(class_number: int) -> ReturnType:
+    cache_res = CacheService.inst.get(class_number)
+    if cache_res is not None:
+        return Errors.Success, cache_res
+
+    year = 101
+    if str(class_number).endswith("18"):
+        year = 106
+    elif str(class_number).endswith("19"):
+        year = 108
+
+    url = f"http://w3.tnfsh.tn.edu.tw/deanofstudies/course/C{year}{class_number}.HTML"
+
+    async with client_session.get(url) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        html = await resp.content.read()
+
+    soup = bs4.BeautifulSoup(html, "html.parser")
+    soup.encoding = "utf-8"
+
+    curriculum = {}
+
+    for i in range(2, 6):
+        _parse_tr(soup.select_one(f'tr[style="mso-yfti-irow:{i}"]'), i - 2, curriculum)
+    for i in range(7, 10):
+        _parse_tr(soup.select_one(f'tr[style="mso-yfti-irow:{i}"]'), i - 3, curriculum)
+
+    _parse_tr(soup.select_one('tr[style="mso-yfti-irow:10;mso-yfti-lastrow:yes"]'), 10 - 3, curriculum)
+
+    CacheService.inst.set(class_number, curriculum)
+    return Errors.Success, curriculum
