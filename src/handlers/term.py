@@ -44,7 +44,7 @@ class TermHandler(RequestHandler):
                 await self.render_remote_server_err()
                 return
 
-            term_scores = list(filter(lambda score: str(score["stdSemeId"]) == std_seme_id, term_scores))
+            term_scores = list(filter(lambda score: str(score["stdSemeId"]) == str(std_seme_id), term_scores))
             if len(term_scores) != 0:
                 term_scores = term_scores[0]
             else:
