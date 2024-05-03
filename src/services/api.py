@@ -288,7 +288,7 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
         "subject": score_obj["subjId"],
         "course_type": score_obj["courseType"],
         "credits": score_obj["credits"],
-        "pass": score_obj["passYn"],
+        "pass": score_obj["passYn"] == "是",
         "score": get_optional_str(score_obj["score"]),
         "score_original": get_optional_str(score_obj["scoreSrc"]),
         "score_examed": get_optional_str(score_obj.get("scoreExam")),
