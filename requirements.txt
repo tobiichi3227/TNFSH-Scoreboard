@@ -2,3 +2,4 @@ fake-useragent
 tornado==6.3.2
 aiohttp
 orjson
+bs4
