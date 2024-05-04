@@ -13,6 +13,11 @@ from services.utils import timeout_handle, ReturnType
 
 
 def get_optional_str(obj):
+    """
+    This function is designed for situations where the academic system might return None or indicate the absence of a value for results that are not yet available.
+    While .get("key", "") function can handle cases where the value does not exist, this function should be used when the return value is None.
+    """
+
     if obj is None:
         return ""
 
@@ -221,8 +226,8 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
     scores = [{
         "subject": score_obj["subjId"],
         "exam_name": score_obj["itemId"],
-        "score": get_optional_str(score_obj["score"]),
-        "class_average": get_optional_str(score_obj.get("yl")),
+        "score": get_optional_str(score_obj.get("score", "")),
+        "class_average": get_optional_str(score_obj.get("yl", "")),
         "is_participated": score_obj["noExamMark"],
     } for score_obj in res["dataRows"]]
 
@@ -291,11 +296,11 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
         "course_type": score_obj["courseType"],
         "credits": score_obj["credits"],
         "pass": score_obj["passYn"] == "是",
-        "score": get_optional_str(score_obj["score"]),
-        "score_original": get_optional_str(score_obj["scoreSrc"]),
-        "score_examed": get_optional_str(score_obj.get("scoreExam")),
-        "score_retake": get_optional_str(score_obj.get("scoreRem")),
-        "class_average": get_optional_str(score_obj.get("yl"))
+        "score": get_optional_str(score_obj.get("score", "")),
+        "score_original": get_optional_str(score_obj.get("scoreSrc", "")),
+        "score_examed": get_optional_str(score_obj.get("scoreExam", "")),
+        "score_retake": get_optional_str(score_obj.get("scoreRem", "")),
+        "class_average": get_optional_str(score_obj.get("yl", ""))
     } for score_obj in res["dataRows"]]
 
     return Errors.Success, scores
@@ -336,9 +341,9 @@ async def get_rewards_record(session_key: str) -> ReturnType:
         "syear": obj["syear"],
         "seme": obj["seme"],
         "fact": obj["fact"],
-        "desc": get_optional_str(obj["rewardArticleId"]),
+        "desc": get_optional_str(obj.get("rewardArticleId", "")),
         "rewards": _get_rewards(obj),
-        "cancel": get_optional_str(obj["cancelYn"]),
+        "cancel": get_optional_str(obj.get("cancelYn", "")),
         "cancel_date": obj["cancelDt"],
     } for obj in res["dataRows"]]
 
