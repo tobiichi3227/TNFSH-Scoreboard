@@ -300,7 +300,10 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
         "score_original": get_optional_str(score_obj.get("scoreSrc", "")),
         "score_examed": get_optional_str(score_obj.get("scoreExam", "")),
         "score_retake": get_optional_str(score_obj.get("scoreRem", "")),
-        "class_average": get_optional_str(score_obj.get("yl", ""))
+        "class_average": get_optional_str(score_obj.get("yl", "")),
+        "class_rank": get_optional_str(score_obj.get("orderC", "")),
+        "group_rank": get_optional_str(score_obj.get("orderS", "")),
+        "all_rank": get_optional_str(score_obj.get("orderG", "")),
     } for score_obj in res["dataRows"]]
 
     return Errors.Success, scores

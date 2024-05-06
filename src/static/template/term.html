@@ -81,15 +81,22 @@
     {% end %}
 
     <table class="table table-sm col-12 mx-lg-3 my-3">
+        {% set display_examed = any(score["score_examed"] != "" for score in subject_scores) %}
+        {% set display_retake = any(score["score_retake"] != "" for score in subject_scores) %}
         <thead>
             <tr>
                 <th scope="col">科目</th>
                 <th scope="col">必選修</th>
                 <th scope="col">學分</th>
+                <th scope="col">班排/校排/年排</th>
                 <th scope="col">最終分數</th>
                 <th scope="col">原始分數</th>
-                <th scope="col">補考分數</th>
-                <th scope="col">重修分數</th>
+                {% if display_examed %}
+                    <th scope="col">補考分數</th>
+                {% end %}
+                {% if display_retake %}
+                    <th scope="col">重修分數</th>
+                {% end %}
                 <th scope="col">班平均</th>
             </tr>
         </thead>
@@ -104,6 +111,8 @@
                     {{ score["credits"] }}
                 </td>
 
+                <td>{{ f"{score['class_rank']}/{score['group_rank']}/{score['all_rank']}" }}</td>
+
                 {% if s == "" %}
                     <td>尚未公佈</td>
                 {% else %}
@@ -111,8 +120,12 @@
                 {% end %}
 
                 <td>{{ score["score_original"] }}</td>
-                <td>{{ score["score_examed"] }}</td>
-                <td>{{ score["score_retake"] }}</td>
+                {% if display_examed %}
+                    <td>{{ score["score_examed"] }}</td>
+                {% end %}
+                {% if display_retake %}
+                    <td>{{ score["score_retake"] }}</td>
+                {% end %}
 
                 <td>{{ score["class_average"] }}</td>
             </tr>
