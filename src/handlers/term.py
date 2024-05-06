@@ -1,7 +1,7 @@
 import tornado.web
 
 from handlers.base import RequestHandler, reqenv, Errors
-from services.api import get_all_semester_info, get_term_scores, get_subject_term_scores
+from services.api import get_all_semester_info, get_term_scores, get_subject_term_scores, get_term_scores_ranking
 
 
 class TermHandler(RequestHandler):
@@ -35,9 +35,10 @@ class TermHandler(RequestHandler):
         if std_seme_id is None:
             std_seme_id = max(item_ids, key=lambda std: std["stdSemeId"])["stdSemeId"]
 
-        subject_scores, term_scores = None, None
+        subject_scores, term_scores, term_ranking = None, None, None
         if std_seme_id is not None:
             err, subject_scores = await get_subject_term_scores(session_id, std_seme_id)
+            err, term_ranking = await get_term_scores_ranking(session_id, std_seme_id)
             err, term_scores = await get_term_scores(session_id, self.session.student_id)
 
             if err == Errors.RemoteServer:
@@ -49,5 +50,5 @@ class TermHandler(RequestHandler):
                 term_scores = term_scores[0]
             else:
                 term_scores = None
-        await self.render("term.html", item_ids=item_ids, subject_scores=subject_scores, term_scores=term_scores,
+        await self.render("term.html", item_ids=item_ids, subject_scores=subject_scores, term_scores=term_scores, term_ranking=term_ranking,
                           std_seme_id=std_seme_id)

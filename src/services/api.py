@@ -268,6 +268,39 @@ async def get_term_scores(session_key: str, student_id: str) -> ReturnType:
 
     return Errors.Success, scores
 
+@timeout_handle
+async def get_term_scores_ranking(session_key: str, std_seme_id: str) -> ReturnType:
+    """
+    Get single term ranking data
+
+    :param session_key: the connection session key
+    :param std_seme_id: semester id
+    :return: List of all term subject scores
+    :rtype: dict
+    """
+
+    data = {
+        "session_key": session_key,
+        "pId": std_seme_id,
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/A0410S_OpenStdView_selectA0410s.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.json(loads=orjson.loads)
+
+    ranking = {
+        "class_rank": "",
+        "group_rank": "",
+        "all_rank": "",
+    }
+    if res["dataRows"]:
+        ranking["class_rank"] = get_optional_str(res["dataRows"][0].get("orderCQ", ""))
+        ranking["group_rank"] = get_optional_str(res["dataRows"][0].get("orderSQ", ""))
+        ranking["all_rank"] = get_optional_str(res["dataRows"][0].get("orderGQ", ""))
+
+    return Errors.Success, ranking
 
 @timeout_handle
 async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnType:
