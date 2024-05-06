@@ -308,7 +308,6 @@ async def get_subject_term_scores(session_key: str, std_seme_id: str) -> ReturnT
 
     return Errors.Success, scores
 
-
 def _get_rewards(reward_obj) -> tuple[int, int, int, int, int, int]:
     c1 = reward_obj["reward1"]
     c2 = reward_obj["reward2"]
@@ -531,6 +530,7 @@ def _parse_tr(section_tr: bs4.Tag, section_number: int, curriculum: dict[int, st
         curriculum[(weekday + 1) * 10 + (section_number + 1)] = course_name
 
 
+@timeout_handle
 async def get_curriculum(class_number: int) -> ReturnType:
     cache_res = CacheService.inst.get(class_number)
     if cache_res is not None:
