@@ -72,6 +72,9 @@ class SubjectAbsenceCountHandler(RequestHandler):
             return
 
         session_id = self.session.session_id
+        if self.session.student_class_number == -1 and self.session.student_seat_number == -1:
+            await self.finish('出席數無法計算')
+            return
 
         err, std_seme_view = await get_all_semester_info(session_id, self.session.student_id)
         if err == Errors.RemoteServer:
