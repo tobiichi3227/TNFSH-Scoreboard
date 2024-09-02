@@ -71,6 +71,8 @@ async def get_student_info(session_key: str) -> ReturnType:
             return Errors.RemoteServer, None
 
         res = await resp.json(loads=orjson.loads)
+        if not res["data"]:
+            res = {"data": {"seat": "-1", "clsNo": "000-1"}}
 
     return Errors.Success, {
         "studentId": tmp["childId"],
