@@ -34,6 +34,9 @@ async def get_validate_pic() -> ReturnType:
         if res is None:
             return Errors.RemoteServer, None
 
+        if res["src"] is None or res["validateSrc"] is None:
+            return Errors.RemoteServer, None
+
         return Errors.Success, {
             "picture": res["src"],
             "src": res["validateSrc"],

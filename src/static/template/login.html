@@ -4,6 +4,16 @@
             return response.text();
         }).then(res => {
             if (res[0] === "E") {
+                if (res == "Eremote") {
+                    let print = form.querySelector("#print");
+                    let wrapper = document.createElement("div");
+                    wrapper.innerHTML = get_response_message_div('校務系統驗證碼出現異常');
+                    print.appendChild(wrapper);
+                    setTimeout(() => {
+                        print.innerHTML = '';
+                    }, 1500);
+                    form.classList.remove("was-validated");
+                }
                 return;
             }
 
