@@ -1,0 +1,151 @@
+{% from utils.htmlgen import get_color_style_html%}
+
+<style>
+.gray-line {
+    border:0;
+    border-top-width:2px;
+    border-top-color:#ced4da;
+    border-top-style:solid;
+    margin:0;
+    margin-top:20px;
+    margin-bottom:20px;
+}
+</style>
+
+<script>
+    function init() {
+        document.getElementById("exam_select").addEventListener('change', event => {
+            let url = '/board/exam/?';
+            const [std_seme_id, item_id] = event.target.value.split(",");
+
+            if (std_seme_id === "-1" || item_id === "-1") {
+                return;
+            }
+
+            url += `&stdSemeId=${std_seme_id}`;
+            url += `&itemId=${item_id}`;
+
+            route.go(url);
+        });
+    }
+
+    init();
+</script>
+
+<div class="row">
+    <select class="form-select my-3 col-12" id="exam_select">
+        <option value="-1,-1">請選擇段考</option>
+        {% for score_obj in item_ids %}
+            <option value="{{ f"{score_obj['stdSemeId']},{score_obj['itemId']}" }}"
+                {% if item_id is not None and std_seme_id is not None and int(item_id) == int(score_obj['itemId']) and int(std_seme_id) == score_obj['stdSemeId'] %}
+                    selected
+                {% end %}
+            >
+                {% if score_obj["seme"] == 1 %}
+                    {% set seme = "上" %}
+                {% else %}
+                    {% set seme = "下" %}
+                {% end %}
+                {{ f"{score_obj['year']} {seme} {score_obj['exam_name']}" }}
+            </option>
+        {% end %}
+    </select>
+
+
+    {% if scores is not None %}
+
+    {% if stats is not None %}
+    <h3>本數據由 列印學生期中考成績單 解析得來</h3>
+    <table class="table table-responsive-sm col-12 mx-lg-3">
+        <thead>
+            <tr>
+                <th scope="col">總分</th>
+                <th scope="col">平均</th>
+                <th scope="col">班排</th>
+                <th scope="col">組排</th>
+                <th scope="col">校排</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                {% if (score_sum := stats["score_sum"]) == "" %}
+                    <td>尚未公佈</td>
+                {% else %}
+                    <td>{{ score_sum }}</td>
+                {% end %}
+
+                {% if (average := stats["average"]) != "" %}
+                    <td>{{ round(float(average), 2) }}</td>
+                {% else %}
+                    <td>尚未公佈</td>
+                {% end %}
+
+                {% if stats['class_rank'] == "" %}
+                    <td>尚未公佈</td>
+                {% else %}
+                    <td>{{ f"{stats['class_rank']} / {stats['class_cnt']}" }}</td>
+                {% end %}
+
+                {% if stats['group_rank'] == "" %}
+                    <td>尚未公佈</td>
+                {% else %}
+                    <td>{{ f"{stats['group_rank']} / {stats['group_cnt']}" }}</td>
+                {% end %}
+
+                {% if stats['all_rank'] == "" %}
+                    <td>尚未公佈</td>
+                {% else %}
+                    <td>{{ f"{stats['all_rank']} / {stats['all_cnt']}" }}</td>
+                {% end %}
+
+            </tr>
+        </tbody>
+    </table>
+    {% end %}
+
+
+    <table class="table col-12 mx-lg-3 my-3">
+        <thead>
+            <tr>
+                <th scope="col">科目</th>
+                <th scope="col">分數</th>
+                <th scope="col">班排</th>
+                <th scope="col">組排</th>
+                <th scope="col">班平均</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        {% for score in scores %}
+            <tr>
+                <td>{{ score["subject"] }}</td>
+
+                {% if (s := score["score"]) == "" %}
+                    <td>尚未公佈</td>
+                {% else %}
+                    <td {% if int(float(s)) < 60 %} {{ get_color_style_html("#dc3545") }} {% end %}>{{ s }}</td>
+                {% end %}
+
+                {% if (class_rank := score["class_rank"]) == "" %}
+                    <td>尚未公佈</td>
+                {% else %}
+                    <td>{{ class_rank }}</td>
+                {% end %}
+
+                {% if (group_rank := score["group_rank"]) == "" %}
+                    <td>尚未公佈</td>
+                {% else %}
+                    <td>{{ group_rank }}</td>
+                {% end %}
+
+                {% if (class_average := score["class_average"]) == "" %}
+                    <td>尚未公佈</td>
+                {% else %}
+                    <td>{{ class_average }}</td>
+                {% end %}
+            </tr>
+        {% end %}
+        </tbody>
+    </table>
+    {% end %}
+</div>

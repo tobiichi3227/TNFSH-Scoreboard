@@ -1,3 +1,4 @@
+import csv
 import base64
 
 import bs4
@@ -509,6 +510,91 @@ async def get_graduation_credits(session_key: str, std_seme_id: str) -> ReturnTy
 
     return Errors.Success, graduation_credits
 
+
+@timeout_handle
+async def get_single_exam_scores_and_stats_from_report(session_key: str, syear: int, seme: int, item_id: int):
+    """
+    Get the exam score and statistics through the report API.
+
+    :param session_key: the connection session key
+    :param syear: semester year
+    :param seme: first semester (1) / second semester (2)
+    :param item_id: the exam id from StdSemeView function
+    :return: a dict contain subjects score and stats
+    """
+    data = {
+        "session_key": session_key,
+        "syse": f"{syear}{seme}",
+        "syear": syear,
+        "seme": seme,
+        "item": item_id,
+        "item2": item_id,
+
+        "format": "CSV",
+        "headSign": False,
+        "mail": 5,
+        "showWhat": "on",
+        "showOrd": "on",
+        "showOrd2": "on",
+        "raDt": "",
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/A0492R1.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.text(encoding='utf-8')
+
+    res = res.split('\n')
+    reader = csv.reader(res, delimiter=',')
+    is_end = False
+    stats = {
+        "score_sum": None,
+        "average": None,
+        "class_rank": None,
+        "class_cnt": None,
+        "group_rank": None,
+        "group_cnt": None,
+        "all_rank": None,
+        "all_cnt": None,
+    }
+    subjects = []
+
+    for idx, row in enumerate(reader):
+        row = list(filter(lambda s: s != '', row))
+        if '應修學分' in row:
+            stats["score_sum"] = row[3]
+            stats["average"] = row[5]
+
+        elif '全班名次' in row:
+            stats["class_rank"], stats["class_cnt"] = row[1].split('/') # class rank
+            stats["group_rank"], stats["group_cnt"] = row[3].split('/') # group rank
+            stats["all_rank"], stats["all_cnt"] = row[5].split('/')
+            is_end = True
+
+
+        elif idx > 19 and not is_end:
+            subjects.append({
+                "subject": row[0].replace('\u3000', ''),
+                "score": row[2].replace('#', ''),
+                "class_rank": row[4],
+                "group_rank": row[5],
+                "class_average": row[6]
+            })
+
+            if len(row) > 7: # contain two subject
+                subjects.append({
+                    "subject": row[0 + 7].replace('\u3000', ''),
+                    "score": row[2 + 7].replace('#', ''),
+                    "class_rank": row[4 + 7],
+                    "group_rank": row[5 + 7],
+                    "class_average": row[6 + 7]
+                })
+
+    return Errors.Success, {
+        "stats": stats,
+        "scores": subjects,
+    }
 
 @timeout_handle
 async def forget_password(account: str, username: str, idnumber: str, birth: str) -> ReturnType:
