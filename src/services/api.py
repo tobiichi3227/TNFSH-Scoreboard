@@ -265,11 +265,11 @@ async def get_term_scores(session_key: str, student_id: str) -> ReturnType:
 
     scores = [{
         "stdSemeId": score_obj["id"],
-        "score": score_obj["sco6"],
-        "all_score": score_obj["scoreT"],
-        "deserved_credits": score_obj["credSum"],
-        "observed_credits": score_obj["credTot"],
-        "total_observed_credits_sum": score_obj["credAdd"],
+        "score": get_optional_str(score_obj.get("sco6", "")),
+        "all_score": get_optional_str(score_obj.get("scoreT", "")),
+        "deserved_credits": get_optional_str(score_obj.get("credSum", "")),
+        "observed_credits": get_optional_str(score_obj.get("credTot", "")),
+        "total_observed_credits_sum": get_optional_str(score_obj.get("credAdd", "")),
     } for score_obj in res["dataRows"]]
 
     return Errors.Success, scores
