@@ -81,8 +81,8 @@ class SubjectAbsenceCountHandler(RequestHandler):
             await self.render_remote_server_err()
             return
 
-        year = max(std_seme_view, key=lambda std: std["syear"])["syear"]
-        seme = max(std_seme_view, key=lambda std: std["seme"])["seme"]
+        year = max(std_seme_view, key=lambda std: (std["syear"], std["seme"]))["syear"]
+        seme = max(std_seme_view, key=lambda std: (std["syear"], std["seme"]))["seme"]
 
         absences = None
         err, r = await get_absence_record(session_id)
