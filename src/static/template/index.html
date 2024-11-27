@@ -179,16 +179,18 @@
                 <li class="nav-item subjectabsence">
                     <a class="nav-link" aria-current="page" href="/board/subjectabsence/">
                         <svg xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 19l2 2l4 -4" /></svg>
-                        <span>各科出席數</span>
+                        <span>各科缺席數</span>
                     </a>
                 </li>
 
+                {% if session.student_class_number > 300 %}
                 <li class="nav-item graduation">
                     <a class="nav-link" aria-current="page" href="/board/graduation/">
                         <svg xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-school"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M22 9l-10 -4l-10 4l10 4l10 -4v6" /><path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4" /></svg>
                         <span>畢業學分</span>
                     </a>
                 </li>
+                {% end %}
 
                 <li class="nav-item installation">
                     <a class="nav-link" aria-current="page" href="/board/installation/">
@@ -216,7 +218,7 @@
                 <li class="nav-item">
                     <a class="nav-link">
                         <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><circle cx="12" cy="7" r="4"></circle><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"></path></svg>
-                        <span>{{ f"{session.student_class_number}{session.student_seat_number}{session.student_name}" }}</span>
+                        <span>{{ f"{session.student_class_number}{session.student_seat_number:02}{session.student_name}" }}</span>
                     </a>
                 </li>
 
