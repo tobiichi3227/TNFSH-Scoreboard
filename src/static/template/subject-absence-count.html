@@ -11,11 +11,13 @@
         <tbody>
         {% for subject_name, cnt in sorted(subject_absence_cnts.items(), key=lambda x: -x[1]) %}
             <tr>
-                <th scope="row">{{ subject_name }}</th> 
+                <th scope="row">{{ subject_name }}</th>
                 <td>{{ cnt }}</td>
             </tr>
         {% end %}
         </tbody>
     </table>
+    {% else %}
+        <h1>沒有任何缺席</h1>
     {% end %}
 </div>

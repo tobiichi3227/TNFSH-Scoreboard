@@ -101,6 +101,10 @@ class SubjectAbsenceCountHandler(RequestHandler):
             return
 
         subject_absence_cnts = collections.defaultdict(int)
+        if not absences:
+            await self.render("subject-absence-count.html", subject_absence_cnts=subject_absence_cnts)
+            return
+
         for absence in absences:
             d = list(map(int, absence["date"].split("/")))
             weekday = datetime.date(d[0] + 1911, d[1], d[2]).weekday() + 1
