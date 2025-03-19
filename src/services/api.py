@@ -181,8 +181,9 @@ async def get_school_year_data(session_key: str, year: int = None, seme: int = N
     :rtype: list[dict]
     """
 
-    data = {
-        "session_key": session_key
+    data: dict = {
+        "session_key": session_key,
+        "sidx": "syear,seme,itemNo",
     }
     if year:
         data["syear"] = year
