@@ -91,9 +91,12 @@ class GraduationCreditsHandler(RequestHandler):
                 await self.render_remote_server_err()
                 return
 
-        err, credits_in_current_seme = await self._get_current_seme_credits(std_seme_id)
-        if err == Errors.RemoteServer:
-            await self.render_remote_server_err()
-            return
+            err, credits_in_current_seme = await self._get_current_seme_credits(std_seme_id)
+            if err == Errors.RemoteServer:
+                await self.render_remote_server_err()
+                return
 
-        await self.render("graduation-credit.html", credits=credit, credits_in_current_seme=credits_in_current_seme)
+            await self.render("graduation-credit.html", credits=credit, credits_in_current_seme=credits_in_current_seme)
+
+        else:
+            await self.render("graduation-credit.html", credits=credit, credits_in_current_seme=None)
