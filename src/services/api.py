@@ -680,12 +680,12 @@ async def get_curriculum(class_number: int) -> ReturnType:
 
     curriculum = {}
 
-    for i in range(2, 6):
-        _parse_tr(soup.select_one(f'tr[style="mso-yfti-irow:{i}"]'), i - 2, curriculum)
-    for i in range(7, 10):
+    for i in range(3, 6 + 1):
         _parse_tr(soup.select_one(f'tr[style="mso-yfti-irow:{i}"]'), i - 3, curriculum)
+    for i in range(9, 11 + 1):
+        _parse_tr(soup.select_one(f'tr[style="mso-yfti-irow:{i}"]'), i - 5, curriculum)
 
-    _parse_tr(soup.select_one('tr[style="mso-yfti-irow:10;mso-yfti-lastrow:yes"]'), 10 - 3, curriculum)
+    _parse_tr(soup.select_one('tr[style="mso-yfti-irow:12;mso-yfti-lastrow:yes"]'), 10 - 3, curriculum)
 
     CacheService.inst.set(class_number, curriculum)
     return Errors.Success, curriculum
