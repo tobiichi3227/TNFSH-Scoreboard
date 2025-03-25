@@ -3,7 +3,7 @@ import base64
 
 import bs4
 import orjson
-from aiohttp import ContentTypeError
+from aiohttp import ContentTypeError, FormData
 
 import config
 import const
@@ -137,20 +137,20 @@ async def get_exam_stats(session_key: str, item_id: str, std_seme_id: str) -> Re
 
 
 @timeout_handle
-async def get_all_semester_info(session_key: str, std_id: str) -> ReturnType:
+async def get_all_semester_info(session_key: str, student_id: int) -> ReturnType:
     """
     Get all semester info including semester id, grade, semester year.
     Semester id is a necessary parameter in many data queries.
 
     :param session_key: connection session key
-    :param std_id: student id from student info
+    :param student_id: student id from student info
     :return: data for semester info
     :rtype: list[dict]
     """
 
     data = {
         "session_key": session_key,
-        "stdId": std_id,
+        "stdId": student_id,
         "statusM": 15,
     }
 
@@ -169,7 +169,7 @@ async def get_all_semester_info(session_key: str, std_id: str) -> ReturnType:
 
 
 @timeout_handle
-async def get_school_year_data(session_key: str, year: int = None, seme: int = None) -> ReturnType:
+async def get_school_year_data(session_key: str, year: int | None=None, seme: int | None=None) -> ReturnType:
     """
     Get school year data
     If year and seme is null, you will get all year data
@@ -242,7 +242,7 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
 
 
 @timeout_handle
-async def get_term_scores(session_key: str, student_id: str) -> ReturnType:
+async def get_term_scores(session_key: str, student_id: int) -> ReturnType:
     """
 
     :param session_key: the connection session key
@@ -482,6 +482,7 @@ def _get_credits_type(t) -> str:
     elif t == "C9":
         return "elective_courses_credit"
 
+    return ""
 
 @timeout_handle
 async def get_graduation_credits(session_key: str, std_seme_id: str) -> ReturnType:
@@ -549,7 +550,7 @@ async def get_single_exam_scores_and_stats_from_report(session_key: str, syear: 
     res = res.split('\n')
     reader = csv.reader(res, delimiter=',')
     is_end = False
-    stats = {
+    stats: dict = {
         "score_sum": None,
         "average": None,
         "class_rank": None,
@@ -689,3 +690,94 @@ async def get_curriculum(class_number: int) -> ReturnType:
 
     CacheService.inst.set(class_number, curriculum)
     return Errors.Success, curriculum
+
+@timeout_handle
+async def get_leave_requests(session_key: str):
+    data = {
+        "session_key": session_key,
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/B0207S1_LeaveAction_execute.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.json(loads=orjson.loads)
+
+
+    t = [
+        {
+            "reviewer": obj["examineStatus"],
+            "review_status": obj["examineM"],
+            "leave_reason": obj["cause"],
+            "reject_reason": obj["causeBack"],
+            "leave_request_id": int(obj["leaveGatId"]),
+            "request_date": obj["applyDt"],
+            "leave_date": obj["leaveDt"],
+            "absences": _get_absences(obj),
+            "stdSemeId": obj["stdSemeId"],
+        }
+        for obj in res["dataRows"]
+    ]
+    return Errors.Success, t
+
+@timeout_handle
+async def add_leave_request(session_key: str, student_id: str, reason: str, leavetype: str, from_date: str,
+                            to_date: str, lessons: str, weeks: str, file: bytes, filename: str):
+
+    data = FormData()
+    data.add_field("session_key", session_key)
+    data.add_field("addIds", str(student_id))
+    data.add_field("absenceM", leavetype)
+    data.add_field("dt1Q", from_date)
+    data.add_field("dt2Q", to_date)
+    data.add_field("lesson", lessons)
+    data.add_field("dayOfWeek", weeks)
+    data.add_field("cause", reason)
+    data.add_field("file", file, filename=filename)
+
+    async with client_session.post(f"{const.MAIN_URL}/B0207S1_B0207sAction_add.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.json(loads=orjson.loads)
+
+
+    if res['data'] and res['data']['status'] == '200':
+        return Errors.Success, ''
+
+    return Errors.General, res['message']
+
+@timeout_handle
+async def delete_leave_request(session_key: str, leave_request_id: int):
+    data = {
+        "session_key": session_key,
+        "id": leave_request_id,
+        "oper": "del",
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/B0207S1_LeaveGatAction_delete1.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+
+    return Errors.Success, None
+
+
+@timeout_handle
+async def get_leave_request_file(session_key: str, leave_request_id: int):
+    data = {
+        "session_key": session_key,
+        "pid": leave_request_id,
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/B0207S1_LeaveGatAction_downloadFile.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = {
+            "file_content": await resp.content.read(),
+            "content_type": resp.headers['Content-Type'],
+            "content_disp": resp.headers['Content-Disposition'],
+        }
+
+    return Errors.Success, res

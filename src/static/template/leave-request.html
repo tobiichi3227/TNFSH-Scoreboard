@@ -1,0 +1,398 @@
+{% from utils.htmlgen import get_color_style_html, get_leave_request_review_status_str, get_long_absence_reason_str, get_short_absence_reason_str %}
+
+<script>
+    function get_response_message_div(message) { return `<div class="alert alert-warning alert-dismissible" role="alert"> ${message} </div>` };
+
+    function init() {
+        document.getElementById("term_select").addEventListener('change', event => {
+            let url = '/board/leave/?';
+            const [std_seme_id] = event.target.value.split(",");
+
+            if (std_seme_id === "-1") {
+                return;
+            }
+
+            url += `&stdSemeId=${std_seme_id}`;
+
+            route.go(url);
+        });
+
+        function getFilenameFromDisposition(disposition) {
+            if (!disposition) return null;
+
+            let match = disposition.match(/filename\*?=['"]?UTF-8''([^;"']+)/i);
+            if (match) {
+                return decodeURIComponent(match[1]);
+            }
+
+            match = disposition.match(/filename=['"]?([^;"']+)['"]?/i);
+            if (match) {
+                return match[1];
+            }
+
+            return null;
+        }
+
+        document.querySelectorAll('button.download').forEach(element => {
+            element.addEventListener('click', () => {
+                let leave_request_id = element.getAttribute("leaveRequestId");
+                post(`/board/be/leave`, {
+                    reqtype: 'download',
+                    leave_request_id: leave_request_id,
+                }).then(response => {
+                    const disposition = response.headers.get("Content-Disposition");
+                    let filename = getFilenameFromDisposition(disposition) || "downloaded_file";
+
+                    return response.blob().then(blob => ({ blob, filename }));
+                }).then(({ blob, filename }) => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                });
+            });
+        });
+
+        document.querySelectorAll('button.delete').forEach(element => {
+            element.addEventListener('click', () => {
+                let leave_request_id = element.getAttribute("leaveRequestId");
+                post(`/board/be/leave`, {
+                    reqtype: 'delete',
+                    leave_request_id: leave_request_id,
+                }).then(response => {
+                    route.reload();
+                });
+            });
+        });
+
+
+
+        let new_leave_form = document.getElementById("newLeaveFormDialog");
+        let new_leave_form_modal = new bootstrap.Modal(new_leave_form);
+        document.querySelector('#newLeaveFormButton').addEventListener('click', () => {
+            new_leave_form_modal.show();
+        });
+
+        function show_message(message) {
+            let print = new_leave_form.querySelector("#print");
+            let wrapper = document.createElement("div");
+            wrapper.innerHTML = get_response_message_div(message);
+            print.appendChild(wrapper);
+            setTimeout(() => {
+                print.innerHTML = '';
+            }, 1500);
+        }
+
+        function convertROCCalendar(date) {
+            let [year, month, day] = date.split("-");
+            let rocYear = parseInt(year) - 1911;
+            return `${rocYear}/${month}/${day}`;
+        }
+
+        new_leave_form.querySelector('button.submit').addEventListener('click', () => {
+            let reason = new_leave_form.querySelector('input.reason').value;
+            if (reason === "") {
+                show_message("事由不可為空");
+                return;
+            }
+            let leavetype = new_leave_form.querySelector('input[name="leavetype"]:checked')?.value
+            if (leavetype === undefined) {
+                show_message("類型不可為空");
+                return;
+            }
+
+            let from_date = new_leave_form.querySelector('input.from-date').value;
+            let to_date = new_leave_form.querySelector('input.to-date').value;
+            if (from_date === "" || to_date === "") {
+                show_message("日期不可為空");
+                return;
+            }
+            if ((new Date(from_date)) > (new Date(to_date))) {
+                show_message("起始日期不能大於結束日期");
+                return;
+            }
+
+            from_date = convertROCCalendar(from_date);
+            to_date = convertROCCalendar(to_date);
+
+
+
+            let files = new_leave_form.querySelector('input.file').files;
+            if (files.length === 0) {
+                show_message("附件不可為空");
+                return;
+            }
+
+            let file = files[0];
+            let filename = file.name;
+            if (file.size >= 5 * 1024 * 1024) {
+                show_message("附件檔案不可大於 5 MiB");
+                return;
+            }
+
+            const allowedTypes = ["image/jpeg", "image/png", "application/pdf", "image/gif"];
+            if (!allowedTypes.includes(file.type)) {
+                show_message("只能上傳 jpeg, png, pdf, gif 格式的檔案");
+                return;
+            }
+
+            let weeks = "";
+            new_leave_form.querySelectorAll('input.btn-check.week:checked').forEach(el => weeks = weeks + el.value);
+            if (weeks === "") {
+                show_message("星期不可為空");
+                return;
+            }
+
+            let lessons = "";
+            new_leave_form.querySelectorAll('input.btn-check.lesson:checked').forEach(el => lessons = lessons + el.value);
+            if (lessons === "") {
+                show_message("節次不可為空");
+                return;
+            }
+
+            post(`/board/be/leave`, {
+                reqtype: 'new',
+                reason: reason,
+                leavetype: leavetype,
+                from_date: from_date,
+                to_date: to_date,
+                file: file,
+                filename: filename,
+                weeks: weeks,
+                lessons: lessons,
+            }).then(response => {
+                return response.text();
+            }).then(res => {
+                if (res[0] == 'S') {
+                    new_leave_form_modal.hide();
+                    route.reload();
+                } else show_message(res);
+            });
+        });
+    }
+
+    init();
+</script>
+
+<div class="modal fade" id="newLeaveFormDialog" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered">
+    <div class="modal-content">
+        <div class="modal-body">
+            <form>
+                <div class="mt-2">
+                    <label for="" class="form-label">請假事由</label>
+                    <input class="form-control reason" type="text">
+                </div>
+
+                <div class="mt-2">
+                    <label for="" class="form-label">日期</label>
+                        <div class="input-group">
+                            <input class="form-control from-date" type="date">
+                            <span class="input-group-text">~</span>
+                            <input class="form-control to-date" type="date">
+                        </div>
+                </div>
+
+                <div class="mt-2">
+                    <label for="" class="form-label">請假類型</label>
+                    <br/>
+                    <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
+                        <input type="radio" class="btn-check" name="leavetype" id="leavetype1" autocomplete="off" value="2">
+                        <label class="btn btn-outline-primary" for="leavetype1">事假</label>
+
+                        <input type="radio" class="btn-check" name="leavetype" id="leavetype2" autocomplete="off" value="3">
+                        <label class="btn btn-outline-primary" for="leavetype2">病假</label>
+
+                        <input type="radio" class="btn-check" name="leavetype" id="leavetype3" autocomplete="off" value="4">
+                        <label class="btn btn-outline-primary" for="leavetype3">喪假</label>
+
+                        <input type="radio" class="btn-check" name="leavetype" id="leavetype4" autocomplete="off" value="5">
+                        <label class="btn btn-outline-primary" for="leavetype4">公假</label>
+
+                        <input type="radio" class="btn-check" name="leavetype" id="leavetype5" autocomplete="off" value="I">
+                        <label class="btn btn-outline-primary" for="leavetype5">身心假</label>
+
+                        <input type="radio" class="btn-check" name="leavetype" id="leavetype6" autocomplete="off" value="W">
+                        <label class="btn btn-outline-primary" for="leavetype6">生理假</label>
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <label for="" class="form-label">星期</label>
+                    <br/>
+                    <div class="btn-group" role="group">
+                        <input type="checkbox" class="btn-check week" id="week1" autocomplete="off" value="1">
+                        <label class="btn btn-outline-primary" for="week1">一</label>
+
+                        <input type="checkbox" class="btn-check week" id="week2" autocomplete="off" value="2">
+                        <label class="btn btn-outline-primary" for="week2">二</label>
+
+                        <input type="checkbox" class="btn-check week" id="week4" autocomplete="off" value="3">
+                        <label class="btn btn-outline-primary" for="week4">三</label>
+
+                        <input type="checkbox" class="btn-check week" id="week5" autocomplete="off" value="4">
+                        <label class="btn btn-outline-primary" for="week5">四</label>
+
+                        <input type="checkbox" class="btn-check week" id="week6" autocomplete="off" value="5">
+                        <label class="btn btn-outline-primary" for="week6">五</label>
+
+                        <input type="checkbox" class="btn-check week" id="week7" autocomplete="off" value="6">
+                        <label class="btn btn-outline-primary" for="week7">六</label>
+
+                        <input type="checkbox" class="btn-check week" id="week8" autocomplete="off" value="0">
+                        <label class="btn btn-outline-primary" for="week8">日</label>
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <label for="" class="form-label">節次</label>
+                    <br/>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="checkbox" class="btn-check lesson" id="lesson11" autocomplete="off" value="r">
+                        <label class="btn btn-outline-primary" for="lesson11">朝會</label>
+
+                        <input type="checkbox" class="btn-check lesson" id="lesson1" autocomplete="off" value="1">
+                        <label class="btn btn-outline-primary" for="lesson1">一</label>
+
+                        <input type="checkbox" class="btn-check lesson" id="lesson2" autocomplete="off" value="2">
+                        <label class="btn btn-outline-primary" for="lesson2">二</label>
+
+                        <input type="checkbox" class="btn-check lesson" id="lesson3" autocomplete="off" value="3">
+                        <label class="btn btn-outline-primary" for="lesson3">三</label>
+
+                        <input type="checkbox" class="btn-check lesson" id="lesson4" autocomplete="off" value="4">
+                        <label class="btn btn-outline-primary" for="lesson4">四</label>
+
+                        <input type="checkbox" class="btn-check lesson" id="lesson5" autocomplete="off" value="5">
+                        <label class="btn btn-outline-primary" for="lesson5">五</label>
+
+                        <input type="checkbox" class="btn-check lesson" id="lesson6" autocomplete="off" value="6">
+                        <label class="btn btn-outline-primary" for="lesson6">六</label>
+
+                        <input type="checkbox" class="btn-check lesson" id="lesson7" autocomplete="off" value="7">
+                        <label class="btn btn-outline-primary" for="lesson7">七</label>
+
+                        <input type="checkbox" class="btn-check lesson" id="lesson8" autocomplete="off" value="8">
+                        <label class="btn btn-outline-primary" for="lesson8">八</label>
+
+                        <input type="checkbox" class="btn-check lesson" id="lesson10" autocomplete="off" value="q">
+                        <label class="btn btn-outline-primary" for="lesson10">午休</label>
+                    </div>
+                </div>
+
+                <div class="mt-2">
+                    <label for="" class="form-label">上傳附件</label>
+                    <input type="file" class="form-control file">
+                </div>
+
+                <div class="mt-2" id="print"></div>
+            </form>
+        </div>
+
+        <div class="modal-footer">
+            <button type="button" class="btn btn-primary submit">Submit</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="row">
+    <select class="form-select my-3 col-12" id="term_select">
+        <option value="-1">請選擇學期</option>
+        {% for score_obj in item_ids %}
+            <option value="{{ f"{score_obj['stdSemeId']}" }}"
+                {% if std_seme_id is not None and int(std_seme_id) == score_obj['stdSemeId'] %}
+                    selected
+                {% end %}
+            >
+                {% if score_obj["seme"] == 1 %}
+                    {% set seme = "上" %}
+                {% else %}
+                    {% set seme = "下" %}
+                {% end %}
+                {{ f"{score_obj['year']} {seme}" }}
+            </option>
+        {% end %}
+    </select>
+
+    <button type="button" class="btn btn-primary" id="newLeaveFormButton">新增假單</button>
+
+    {% for leave_request_id, leave_form in leave_forms.items() %}
+        {% set r = leave_form[0] %}
+        <div class="accordion mt-2">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ leave_request_id }}" aria-expanded="true" aria-controls="collapse{{ leave_request_id }}">
+                        <div>
+                            <p>{{ r["request_date"] }} {{ r["leave_reason"] }}</p>
+                            <p>審核狀況：{{ get_leave_request_review_status_str(r["review_status"]) }}</p>
+                        </div>
+                    </button>
+                </h2>
+
+                <div id="collapse{{ leave_request_id }}" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+                    <div class="accordion-body">
+                        <p>審核者: {{ r["reviewer"] }}</p>
+                        {% if r["reject_reason"] %}
+                            <p>退回事由: {{ r["reject_reason"] }}</p>
+                        {% end %}
+                        <button class="btn btn-primary download" leaveRequestId="{{ leave_request_id }}">下載證明</button>
+                        <button class="btn btn-danger delete" leaveRequestId="{{ leave_request_id }}">刪除假單</button>
+
+                        {% set week_to_chinese_str = ["一", "二", "三", "四", "五", "六", "日"] %}
+                        <table class="table table-bordered table-light table-responsive col-12 mx-lg-3 my-3 highlight">
+                            <thead>
+                                <tr>
+                                    <th scope="col">
+                                        <div>
+                                            <p>年</p>
+                                            <p>月</p>
+                                            <p>日</p>
+                                            <p>星期</p>
+                                        </div>
+                                    </th>
+                                    {% for leave_request in leave_form %}
+                                        {% set d = list(map(int, leave_request["leave_date"].split("/"))) %}
+                                        {% set weekday = datetime.date(d[0]+1911, d[1], d[2]).weekday() %}
+                                        <th scope="col">
+                                            <div>
+                                                <p>{{ d[0] }}</p>
+                                                <p>{{ d[1] }}</p>
+                                                <p>{{ d[2] }}</p>
+                                                <p>{{ week_to_chinese_str[weekday] }}</p>
+                                            </div>
+                                        </th>
+                                    {% end %}
+                                </tr>
+                            </thead>
+
+                            {% set ts = ["早", "朝會", "一", "二", "三", "四", "午休", "五", "六", "七", "八"] %}
+                            <tbody>
+                                {% for i, t in enumerate(ts) %}
+                                <tr>
+                                    <td>{{ t }}</td>
+                                    {% for leave_request in leave_form %}
+                                        {% set absence = leave_request["absences"][i] %}
+                                        <td
+                                            {% if absence is not None %}
+                                                style="background-color: #ffc107"
+                                            {% end %}
+                                        >
+                                            {{ get_short_absence_reason_str(absence) }}
+                                        </td>
+                                    {% end %}
+                                </tr>
+                                {% end %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% end %}
+</div>

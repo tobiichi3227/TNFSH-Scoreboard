@@ -7,6 +7,7 @@ from handlers.reward import RewardHandler
 from handlers.absence import SubjectAbsenceCountHandler, AbsenceHandler
 from handlers.graduation import GraduationCreditsHandler
 from handlers.forgetpw import ForgetPasswordHandler
+from handlers.leave import LeaveRequestHandler
 
 
 def get_routers():
@@ -21,6 +22,7 @@ def get_routers():
         ("/validate", ValidateHandler),
         ("/resetpw", ResetPasswordHandler),
         ("/forgetpw", ForgetPasswordHandler),
+        ("/leave", LeaveRequestHandler),
 
         ("/exam", ExamHandler),
         ("/term", TermHandler),

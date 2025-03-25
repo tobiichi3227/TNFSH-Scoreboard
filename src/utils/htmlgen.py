@@ -82,6 +82,22 @@ ABSENCE_LONG_REASON = {
     # "A": "跨",
 }
 
+LEAVE_REQUEST_REVIEW_STATUS = {
+    "0": "未上傳",
+    "1": "待審核",
+    "Y": "已完成",
+    "N": "未通過",
+    "B": "退回",
+    "R": "重新申請",
+}
+
+CREDIT_TYPE_NAMES = {
+    "all_credit": "應修習學分",
+    "graduation_credit": "畢業學分",
+    "required_courses_credit": "必修學分",
+    "elective_courses_credit": "選修學分",
+}
+
 
 def get_short_absence_reason_str(reason_code: str) -> str:
     if reason_code is None or reason_code == "":
@@ -98,11 +114,13 @@ def get_long_absence_reason_str(reason_code: str) -> str:
 
 
 def get_credit_type_chinese_str(type: str) -> str:
-    TYPE_NAMES = {
-        "all_credit": "應修習學分",
-        "graduation_credit": "畢業學分",
-        "required_courses_credit": "必修學分",
-        "elective_courses_credit": "選修學分",
-    }
+    if type is None or type == "":
+        return ""
 
-    return TYPE_NAMES[type]
+    return CREDIT_TYPE_NAMES[type]
+
+def get_leave_request_review_status_str(status: str) -> str:
+    if status is None or status == "":
+        return ""
+
+    return LEAVE_REQUEST_REVIEW_STATUS[status]
