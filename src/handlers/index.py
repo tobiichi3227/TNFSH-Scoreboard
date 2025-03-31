@@ -23,3 +23,8 @@ class PWAInstallationHandler(RequestHandler):
     @reqenv
     async def get(self):
         await self.render("pwa-installation-guide.html")
+
+class ManifestHandler(RequestHandler):
+    async def get(self):
+        self.set_header("Content-Type", "application/json")
+        await self.render("manifest.json")

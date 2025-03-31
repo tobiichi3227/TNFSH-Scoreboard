@@ -4,6 +4,7 @@ from typing import Any
 import tornado.template
 import tornado.web
 
+import config
 from services.session import Session
 
 
@@ -26,6 +27,7 @@ class RequestHandler(tornado.web.RequestHandler):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.tpldr = tornado.template.Loader("static/template", autoescape=None)
+        self.base_url = config.BASE_URL.removesuffix("/")
 
     async def render(self, templ: str, **kwargs):
         session = None
@@ -48,6 +50,7 @@ class RequestHandler(tornado.web.RequestHandler):
             session = Session.Empty_Session
 
         kwargs["session"] = session
+        kwargs["base_url"] = self.base_url
 
         assert templ is not None, "Missing templ argument"
         data = self.tpldr.load(templ).generate(**kwargs)

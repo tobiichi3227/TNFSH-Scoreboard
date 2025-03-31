@@ -3,7 +3,7 @@
 <script>
     function init() {
         document.getElementById("reward_select").addEventListener('change', event => {
-            let url = '/board/reward/?';
+            let url = '{{ base_url }}/reward/?';
             const [year, seme] = event.target.value.split(",");
 
             if (year === "-1" || seme === "-1") {

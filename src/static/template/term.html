@@ -3,7 +3,7 @@
 <script>
     function init() {
         document.getElementById("term_select").addEventListener('change', event => {
-            let url = '/board/term/?';
+            let url = '{{ base_url }}/term/?';
             const [std_seme_id] = event.target.value.split(",");
 
             if (std_seme_id === "-1") {

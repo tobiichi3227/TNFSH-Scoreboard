@@ -1,6 +1,6 @@
 <script>
     function change_validate_code() {
-        get('/board/be/validate').then(response => {
+        get('{{ base_url }}/be/validate').then(response => {
             return response.text();
         }).then(res => {
             if (res[0] === "E") {
@@ -28,12 +28,12 @@
 
     function login() {
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            location.href = "/board/exam/";
+            location.href = "{{ base_url }}/exam/";
             return;
         }
 
         if (route.prev_url == null) {
-            location.href = "/board/info/";
+            location.href = "{{ base_url }}/info/";
         } else {
             location.href = route.prev_url;
         }
@@ -99,7 +99,7 @@
             let validate_src = form.querySelector("#validatePic").getAttribute('src_src');
             let using_ocr = document.getElementById('manualValidate').style.display !== 'none';
 
-            post('/board/be/login', {
+            post('{{ base_url }}/be/login', {
                 reqtype: 'login',
                 username: mail,
                 password: password,
@@ -182,7 +182,7 @@
                     </button>
                     <div class="invalid-feedback">請輸入密碼</div>
                 </div>
-                <a href="/board/forgetpw/" class="nav-item" aria-current="page">忘記密碼</a>
+                <a href="{{ base_url }}/forgetpw/" class="nav-item" aria-current="page">忘記密碼</a>
             </div>
             <div class="mb-4 d-flex" id="validateSection">
                 <input type="text" maxlength="4" id="InputValidate" class="form-control validate" placeholder="Validate Code" style="width: 75%; display: none;"/>

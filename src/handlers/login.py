@@ -16,19 +16,22 @@ COOKIE_ITEMS = {
     "student_seat_number": None,
 }
 
+base_url = config.BASE_URL.removesuffix("/")
+if base_url == "":
+    base_url = "/"
 
 class LoginHandler(RequestHandler):
     @reqenv
     async def get(self):
         if self.session is not None:
-            await self.finish("""
+            await self.finish(f'''
             你已經登入了
             <script>
-                setTimeout(() => {
-                    route.go('/board/info/');
-                }, 1500);
+                setTimeout(() => {{
+                    route.go('{self.base_url}/info/');
+                }}, 1500);
             </script>
-            """)
+            ''')
             return
 
         await self.render("login.html")
@@ -112,7 +115,7 @@ class LoginHandler(RequestHandler):
     def setup_cookies(self):
         COOKIE_ARGS = {
             "expires": 30 * 60 + time.time(),  # https://www.cnblogs.com/apexchu/p/4363250.html
-            "path": "/board",
+            "path": base_url,
             "httponly": True,
         }
 
@@ -122,7 +125,7 @@ class LoginHandler(RequestHandler):
 
     def remove_cookies(self):
         for k in COOKIE_ITEMS.keys():
-            self.clear_cookie(k, path="/board")
+            self.clear_cookie(k, path=base_url)
             COOKIE_ITEMS[k] = None
 
 

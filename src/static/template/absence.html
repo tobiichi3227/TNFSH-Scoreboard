@@ -27,7 +27,7 @@ table.highlight th:first-child {
 <script>
     function init() {
         document.getElementById("absence_select").addEventListener('change', event => {
-            let url = '/board/absence/?';
+            let url = '{{ base_url }}/absence/?';
             const [year, seme] = event.target.value.split(",");
 
             if (year === "-1" || seme === "-1") {
@@ -48,9 +48,9 @@ table.highlight th:first-child {
     <select class="form-select my-3 col-12" id="absence_select">
         <option value="-1,-1">請選擇學期</option>
         {% for score_obj in item_ids %}
-            <option value="{{ f"{score_obj['year']},{score_obj['seme']}" }}" 
-                {% if year is not None and seme is not None and int(year) == int(score_obj['year']) and int(seme) == int(score_obj['seme']) %} 
-                    selected 
+            <option value="{{ f"{score_obj['year']},{score_obj['seme']}" }}"
+                {% if year is not None and seme is not None and int(year) == int(score_obj['year']) and int(seme) == int(score_obj['seme']) %}
+                    selected
                 {% end %}
             >
                 {% if score_obj["seme"] == 1 %}
@@ -66,7 +66,7 @@ table.highlight th:first-child {
 
     {% if absences is not None %}
 
-    {% if stats is not None %} 
+    {% if stats is not None %}
     <table class="table table-light table-responsive col-12 mx-lg-3 my-3">
         <thead>
             <tr>
@@ -75,7 +75,7 @@ table.highlight th:first-child {
                 {% end %}
             </tr>
         </thead>
-         
+
         <tbody>
             <tr>
                 {% for v in stats.values() %}
@@ -85,15 +85,15 @@ table.highlight th:first-child {
         </tbody>
     </table>
     {% end %}
-    
+
     <div class="table-responsive should-not-open-menu-by-swipe">
         <table class="table table-bordered table-light table-responsive col-12 mx-lg-3 my-3 highlight">
             <thead>
                 <tr>
                     <th scope="col">
-                        <span>年</span> 
-                        <span>月</span> 
-                        <span>日</span> 
+                        <span>年</span>
+                        <span>月</span>
+                        <span>日</span>
                         <span>星期</span>
                     </th>
                     {% for absence in absences %}
@@ -108,7 +108,7 @@ table.highlight th:first-child {
                     {% end %}
                 </tr>
             </thead>
-            
+
             {% set ts = ["早", "朝會", "一", "二", "三", "四", "午休", "五", "六", "七", "八"] %}
             <tbody>
                 {% for i, t in enumerate(ts) %}

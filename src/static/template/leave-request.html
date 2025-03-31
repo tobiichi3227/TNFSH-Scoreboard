@@ -5,7 +5,7 @@
 
     function init() {
         document.getElementById("term_select").addEventListener('change', event => {
-            let url = '/board/leave/?';
+            let url = '{{ base_url }}/leave/?';
             const [std_seme_id] = event.target.value.split(",");
 
             if (std_seme_id === "-1") {
@@ -36,7 +36,7 @@
         document.querySelectorAll('button.download').forEach(element => {
             element.addEventListener('click', () => {
                 let leave_request_id = element.getAttribute("leaveRequestId");
-                post(`/board/be/leave`, {
+                post(`${this.base_url}/be/leave`, {
                     reqtype: 'download',
                     leave_request_id: leave_request_id,
                 }).then(response => {
@@ -60,7 +60,7 @@
         document.querySelectorAll('button.delete').forEach(element => {
             element.addEventListener('click', () => {
                 let leave_request_id = element.getAttribute("leaveRequestId");
-                post(`/board/be/leave`, {
+                post(`${this.base_url}/be/leave`, {
                     reqtype: 'delete',
                     leave_request_id: leave_request_id,
                 }).then(response => {
@@ -154,7 +154,7 @@
                 return;
             }
 
-            post(`/board/be/leave`, {
+            post(`${this.base_url}/be/leave`, {
                 reqtype: 'new',
                 reason: reason,
                 leavetype: leavetype,

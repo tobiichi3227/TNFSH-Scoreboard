@@ -9,3 +9,5 @@ SECRET_COOKIE is a string to encrypt cookie (must be random)
 PORT = 5227
 SECRET_COOKIE = 'tobiichi3227orzorz'
 SCHNO = '210305D'
+
+BASE_URL = '/'

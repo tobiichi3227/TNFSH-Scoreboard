@@ -71,17 +71,19 @@ var route = new function() {
     this.curr_url = null;
     this.prev_url = null;
     this.main_navbar = null;
+    this.base_url = null;
 
     this.init_ui = function() {
         let session_id = document.getElementById("indexjs").getAttribute('session_id');
+        this.base_url = document.getElementById("indexjs").getAttribute('base_url');
         this.main_navbar = document.getElementById('main-navbar');
 
         this.main_navbar.querySelector('.nav-link.logout').addEventListener('click', () => {
-            post('/board/be/login', {
+            post(`${this.base_url}/be/login`, {
                 reqtype: 'logout',
                 session_id: session_id,
             }).then(_ => {
-                location.href = '/board/info/';
+                location.href = `${this.base_url}/info/`;
             });
         });
 
@@ -105,14 +107,14 @@ var route = new function() {
     this.update = function(mode) {
         function PoPState() {
             this.prev_url = location.href;
-            let parts = location.href.split('/');
-            let page = parts[4];
+            let parts = location.href.replaceAll(location.origin, '').replaceAll(`${this.base_url}`, '').split('/');
+            let page = parts[1];
             if (page === undefined || page.length === 0 || page === 'index') {
                 page = 'info';
             }
 
-            let req_path = parts[4];
-            for (let i = 5; i < parts.length - 1; i++) {
+            let req_path = parts[1];
+            for (let i = 2; i < parts.length - 1; i++) {
                 req_path += `/${parts[i]}`;
             }
 
@@ -128,10 +130,9 @@ var route = new function() {
                 args = `${parts[1]}&cache=${new Date().getTime()}`
             }
 
-
             routerView.innerHTML = loading_animation_html;
 
-            let request_url = `/board/be/${req_path}?${args}`;
+            let request_url = `${this.base_url}/be/${req_path}?${args}`;
             get(request_url).then(response => {
                 if (!response.ok) return "";
 
@@ -192,6 +193,7 @@ var route = new function() {
         window.addEventListener('popstate', PoPState);
 
         function onLoad() {
+            this.base_url = document.getElementById("indexjs").getAttribute('base_url');
             PoPState();
             let links = document.querySelectorAll('li a[href]');
             links.forEach(link => {

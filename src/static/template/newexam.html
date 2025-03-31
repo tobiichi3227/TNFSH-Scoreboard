@@ -15,7 +15,7 @@
 <script>
     function init() {
         document.getElementById("exam_select").addEventListener('change', event => {
-            let url = '/board/exam/?';
+            let url = '{{ base_url }}/exam/?';
             const [std_seme_id, item_id] = event.target.value.split(",");
 
             if (std_seme_id === "-1" || item_id === "-1") {

@@ -6,29 +6,29 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <meta name="description" content="A simple score searching system for TNFSH"/>
 
-    <link rel="icon" href="/board/src/favicon.ico">
-    <link rel="manifest" href="/board/src/manifest.json">
+    <link rel="icon" href="{{ base_url }}/src/favicon.ico">
+    <link rel="manifest" href="{{ base_url }}/src/manifest.json">
     <link
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
             rel="stylesheet"
             crossorigin="anonymous"
     />
 
-    <script src="/board/src/route.js"></script>
-    <script src="/board/src/swiped-events.min.js"></script>
+    <script src="{{ base_url }}/src/route.js"></script>
+    <script src="{{ base_url }}/src/swiped-events.min.js"></script>
     <meta charset="UTF-8"/>
 
     <title>TNFSH-Scoreboard</title>
 
-    <script id="indexjs" session_id="{{ session.session_id }}">
+    <script id="indexjs" session_id="{{ session.session_id }}" base_url="{{ base_url }}">
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/board/src/sw.js');
+            navigator.serviceWorker.register('{{ base_url }}/src/sw.js');
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             route.init_ui();
             if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && route.session_id === null && !location.href.includes("login")) {
-                route.go("/board/login/");
+                route.go("{{ base_url }}/login/");
             } else {
                 route.update(0);
             }
@@ -140,7 +140,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <a class="navbar-brand brand-disappeared" href="/board/info/">TNFSH-Scoreboard</a>
+        <a class="navbar-brand brand-disappeared" href="{{ base_url }}/info/">TNFSH-Scoreboard</a>
     </div>
 </nav>
 
@@ -149,42 +149,42 @@
         <div class="my-2 col-lg-2 side-collapse-left in" id="main-navbar">
             <ul class="nav nav-pills flex-column">
                 <li class="nav-item exam">
-                    <a class="nav-link" aria-current="page" href="/board/exam/">
+                        <a class="nav-link" aria-current="page" href="{{ base_url }}/exam/">
                         <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 3v4a1 1 0 0 0 1 1h4"></path><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"></path></svg>
                         <span>段考成績</span>
                     </a>
                 </li>
 
                 <li class="nav-item term">
-                    <a class="nav-link" aria-current="page" href="/board/term/">
+                    <a class="nav-link" aria-current="page" href="{{ base_url }}/term/">
                         <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><line x1="9" y1="6" x2="20" y2="6"></line><line x1="9" y1="12" x2="20" y2="12"></line><line x1="9" y1="18" x2="20" y2="18"></line><line x1="5" y1="6" x2="5" y2="6.01"></line><line x1="5" y1="12" x2="5" y2="12.01"></line><line x1="5" y1="18" x2="5" y2="18.01"></line></svg>
                         <span>學期成績</span>
                     </a>
                 </li>
 
                 <li class="nav-item reward">
-                    <a class="nav-link" aria-current="page" href="/board/reward/">
+                    <a class="nav-link" aria-current="page" href="{{ base_url }}/reward/">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-trophy" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 21l8 0" /><path d="M12 17l0 4" /><path d="M7 4l10 0" /><path d="M17 4v8a5 5 0 0 1 -10 0v-8" /><path d="M5 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /><path d="M19 9m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" /></svg>
                         <span>獎懲紀錄</span>
                     </a>
                 </li>
 
                 <li class="nav-item absence">
-                    <a class="nav-link" aria-current="page" href="/board/absence/">
+                    <a class="nav-link" aria-current="page" href="{{ base_url }}/absence/">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-calendar" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M11 15h1" /><path d="M12 15v3" /></svg>
                         <span>缺曠課紀錄</span>
                     </a>
                 </li>
 
                 <li class="nav-item subjectabsence">
-                    <a class="nav-link" aria-current="page" href="/board/subjectabsence/">
+                    <a class="nav-link" aria-current="page" href="{{ base_url }}/subjectabsence/">
                         <svg xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.5 21h-5.5a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v6" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M15 19l2 2l4 -4" /></svg>
                         <span>各科缺席數</span>
                     </a>
                 </li>
 
                 <li class="nav-item leave">
-                    <a class="nav-link" aria-current="page" href="/board/leave/">
+                    <a class="nav-link" aria-current="page" href="{{ base_url }}/leave/">
                         <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-calendar-stats"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M11.795 21h-6.795a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v4" /><path d="M18 14v4h4" /><path d="M18 18m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" /><path d="M15 3v4" /><path d="M7 3v4" /><path d="M3 11h16" /></svg>
                         <span>線上請假</span>
                     </a>
@@ -192,7 +192,7 @@
 
                 {% if session.student_class_number > 300 %}
                 <li class="nav-item graduation">
-                    <a class="nav-link" aria-current="page" href="/board/graduation/">
+                    <a class="nav-link" aria-current="page" href="{{ base_url }}/graduation/">
                         <svg xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-school"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M22 9l-10 -4l-10 4l10 4l10 -4v6" /><path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4" /></svg>
                         <span>畢業學分</span>
                     </a>
@@ -200,21 +200,21 @@
                 {% end %}
 
                 <li class="nav-item installation">
-                    <a class="nav-link" aria-current="page" href="/board/installation/">
+                    <a class="nav-link" aria-current="page" href="{{ base_url }}/installation/">
                         <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"></path><polyline points="7 11 12 16 17 11"></polyline><line x1="12" y1="4" x2="12" y2="16"></line></svg>
                         <span>安裝教學</span>
                     </a>
                 </li>
 
                 <li class="nav-item info">
-                    <a class="nav-link" aria-current="page" href="/board/info/">
+                    <a class="nav-link" aria-current="page" href="{{ base_url }}/info/">
                         <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M18 8a3 3 0 0 1 0 6"></path><path d="M10 8v11a1 1 0 0 1 -1 1h-1a1 1 0 0 1 -1 -1v-5"></path><path d="M12 8h0l4.524 -3.77a0.9 .9 0 0 1 1.476 .692v12.156a0.9 .9 0 0 1 -1.476 .692l-4.524 -3.77h-8a1 1 0 0 1 -1 -1v-4a1 1 0 0 1 1 -1h8"></path></svg>
                         <span>公告</span>
                     </a>
                 </li>
 
                 <li class="nav-item about">
-                    <a class="nav-link" aria-current="page" href="/board/about/">
+                    <a class="nav-link" aria-current="page" href="{{ base_url }}/about/">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-info-circle" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0 -18 0" /><path d="M12 9h.01" /><path d="M11 12h1v4h1" /></svg>
                         <span>關於</span>
                     </a>
@@ -230,7 +230,7 @@
                 </li>
 
                 <li class="nav-item">
-                    <a class="nav-link resetpw" aria-current="page" href="/board/resetpw/">
+                    <a class="nav-link resetpw" aria-current="page" href="{{ base_url }}/resetpw/">
                         <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-password" width="24" height="24" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 10v4" /><path d="M10 13l4 -2" /><path d="M10 11l4 2" /><path d="M5 10v4" /><path d="M3 13l4 -2" /><path d="M3 11l4 2" /><path d="M19 10v4" /><path d="M17 13l4 -2" /><path d="M17 11l4 2" /></svg>
                         <span>修改密碼</span>
                     </a>
@@ -240,7 +240,7 @@
                 <li class="nav-item login">
                     <a
                             class="nav-link login"
-                            href="/board/login/"
+                            href="{{ base_url }}/login/"
                             style="display: none;"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"></path><path d="M7 12h14l-3 -3m0 6l3 -3"></path></svg>
@@ -249,7 +249,7 @@
 
                     <a
                         class="nav-link logout"
-                        href="/board/info/"
+                        href="{{ base_url }}/info/"
                         style="display: none"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" class="__mantine-ref-icon mantine-1syvhlf" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"></path><path d="M7 12h14l-3 -3m0 6l3 -3"></path></svg>
