@@ -1,5 +1,5 @@
 def get_color_style_html(color: str) -> str:
-    return f"style=\"color: {color}\""
+    return f'style="color: {color}"'
 
 
 def get_reward_chinese_str(reward) -> str:
@@ -56,6 +56,7 @@ ABSENCE_SHORT_REASON = {
     "9": "其他",
     "F": "新冠",
     "A": "跨",
+    "I": "身心",
 }
 
 ABSENCE_LONG_REASON = {
@@ -79,6 +80,7 @@ ABSENCE_LONG_REASON = {
     "W": "生理假",
     "9": "其他",
     "F": "新冠",
+    "I": "身心調適假",
     # "A": "跨",
 }
 
@@ -118,6 +120,7 @@ def get_credit_type_chinese_str(type: str) -> str:
         return ""
 
     return CREDIT_TYPE_NAMES[type]
+
 
 def get_leave_request_review_status_str(status: str) -> str:
     if status is None or status == "":
