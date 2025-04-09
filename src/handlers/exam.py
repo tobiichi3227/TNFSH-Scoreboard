@@ -5,7 +5,6 @@ from services.api import get_school_year_data, get_all_semester_info, get_single
 
 
 class ExamHandler(RequestHandler):
-
     @reqenv
     async def get(self):
         if self.session is None:
@@ -54,32 +53,39 @@ class ExamHandler(RequestHandler):
 
         item_ids.sort(key=lambda std: (-std["year"], -std["seme"]))
 
+        scores, stats = None, None
+        if item_id is not None and std_seme_id is not None:
+            err, scores = await get_single_exam_scores(session_id, item_id, std_seme_id)
+            err, stats = await get_exam_stats(session_id, item_id, std_seme_id)
+
+            if err == Errors.RemoteServer:
+                await self.render_remote_server_err()
+                return
+
         try:
             err, r = await get_single_exam_scores_and_stats_from_report(session_id, current_year, current_seme, item_id)
             if err == Errors.RemoteServer:
                 await self.render_remote_server_err()
                 return
 
-            scores = r["scores"]
-            stats = r["stats"]
-            await self.render("newexam.html", item_ids=item_ids, scores=scores, stats=stats,
-                            item_id=item_id, std_seme_id=std_seme_id)
+            report_scores = r["scores"]
+            report_stats = r["stats"]
+
+            for report_score in report_scores:
+                for score in scores:
+                    if score["subject"] != report_score["subject"]:
+                        continue
+                    for key, value in report_score.items():
+                        if key not in score:
+                            score[key] = value
+
+            for key, value in report_stats.items():
+                if key not in stats:
+                    stats[key] = value
 
         except Exception as e:
             import traceback
             traceback.print_exception(e)
 
-            scores, stats = None, None
-            if item_id is not None and std_seme_id is not None:
-                err, scores = await get_single_exam_scores(session_id, item_id, std_seme_id)
-                err, stats = await get_exam_stats(session_id, item_id, std_seme_id)
-
-                if err == Errors.RemoteServer:
-                    await self.render_remote_server_err()
-                    return
-
-            await self.render("exam.html", item_ids=item_ids, scores=scores, stats=stats,
-                            item_id=item_id, std_seme_id=std_seme_id)
-
-
-
+        await self.render("exam.html", item_ids=item_ids, scores=scores, stats=stats,
+                        item_id=item_id, std_seme_id=std_seme_id)
