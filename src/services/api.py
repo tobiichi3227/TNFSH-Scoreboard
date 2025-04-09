@@ -563,34 +563,36 @@ async def get_single_exam_scores_and_stats_from_report(session_key: str, syear: 
     subjects = []
 
     for idx, row in enumerate(reader):
-        row = list(filter(lambda s: s != '', row))
         if '應修學分' in row:
-            stats["score_sum"] = row[3]
-            stats["average"] = row[5]
+            stats["score_sum"] = row[20]
+            stats["average"] = row[26]
 
         elif '全班名次' in row:
-            stats["class_rank"], stats["class_cnt"] = row[1].split('/') # class rank
-            stats["group_rank"], stats["group_cnt"] = row[3].split('/') # group rank
-            stats["all_rank"], stats["all_cnt"] = row[5].split('/')
+            if row[6] != '':
+                stats["class_rank"], stats["class_cnt"] = row[6].split('/') # class rank
+            if row[20] != '':
+                stats["group_rank"], stats["group_cnt"] = row[20].split('/') # group rank
+            if row[32] != '':
+                stats["all_rank"], stats["all_cnt"] = row[32].split('/')
             is_end = True
 
 
         elif idx > 19 and not is_end:
             subjects.append({
                 "subject": row[0].replace('\u3000', ''),
-                "score": row[2].replace('#', ''),
-                "class_rank": row[4],
-                "group_rank": row[5],
-                "class_average": row[6]
+                "score": row[5].replace('#', ''),
+                "class_rank": row[9],
+                "group_rank": row[12],
+                "class_average": row[15]
             })
 
-            if len(row) > 7: # contain two subject
+            if len(row) > 18: # contain two subject
                 subjects.append({
-                    "subject": row[0 + 7].replace('\u3000', ''),
-                    "score": row[2 + 7].replace('#', ''),
-                    "class_rank": row[4 + 7],
-                    "group_rank": row[5 + 7],
-                    "class_average": row[6 + 7]
+                    "subject": row[0 + 18].replace('\u3000', ''),
+                    "score": row[5 + 18].replace('#', ''),
+                    "class_rank": row[12 + 18],
+                    "group_rank": row[16 + 18],
+                    "class_average": row[17 + 18]
                 })
 
     return Errors.Success, {

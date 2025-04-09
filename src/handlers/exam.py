@@ -62,30 +62,30 @@ class ExamHandler(RequestHandler):
                 await self.render_remote_server_err()
                 return
 
-        try:
-            err, r = await get_single_exam_scores_and_stats_from_report(session_id, current_year, current_seme, item_id)
-            if err == Errors.RemoteServer:
-                await self.render_remote_server_err()
-                return
+            try:
+                err, r = await get_single_exam_scores_and_stats_from_report(session_id, current_year, current_seme, item_id)
+                if err == Errors.RemoteServer:
+                    await self.render_remote_server_err()
+                    return
 
-            report_scores = r["scores"]
-            report_stats = r["stats"]
+                report_scores = r["scores"]
+                report_stats = r["stats"]
 
-            for report_score in report_scores:
-                for score in scores:
-                    if score["subject"] != report_score["subject"]:
-                        continue
-                    for key, value in report_score.items():
-                        if key not in score:
-                            score[key] = value
+                for report_score in report_scores:
+                    for score in scores:
+                        if score["subject"] != report_score["subject"]:
+                            continue
+                        for key, value in report_score.items():
+                            if key not in score:
+                                score[key] = value
 
-            for key, value in report_stats.items():
-                if key not in stats:
-                    stats[key] = value
+                for key, value in report_stats.items():
+                    if key not in stats:
+                        stats[key] = value
 
-        except Exception as e:
-            import traceback
-            traceback.print_exception(e)
+            except Exception as e:
+                import traceback
+                traceback.print_exception(e)
 
         await self.render("exam.html", item_ids=item_ids, scores=scores, stats=stats,
                         item_id=item_id, std_seme_id=std_seme_id)
