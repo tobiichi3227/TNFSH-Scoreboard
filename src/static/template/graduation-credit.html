@@ -9,32 +9,55 @@
         <p><span {{ get_color_style_html("#ffc107") }}>黃色</span>表示本學期可以將剩餘的學分修完</p>
         <p><span {{ get_color_style_html("#dc3545") }}>紅色</span>表示本學期沒辦法將剩餘的學分修完</p>
         <p>可能是前五個學期學分不夠或是本學期某些學科缺席超過1/3(自己把自己當掉)</p>
-        <p>本學期必修學分:{{ credits_in_current_seme["required_course"] }} 校選學分: {{ credits_in_current_seme["elective_course"] }}</p>
+        <p>本學期部定必修學分: {{ final_credit[0]}} 校訂必修學分: {{ final_credit[1] }} 校選學分: {{ final_credit[2] }}</p>
     </div>
     <table class="table col-12 mx-lg-3">
         <thead>
             <tr>
                 <th scope="col">項目</th>
                 <th scope="col">實得學分</th>
-                <th scope="col">標準學分</th>
+                <th scope="col">最低學分</th>
             </tr>
         </thead>
 
+        {% set class_number = session.student_class_number % 100 %}
         <tbody>
-        {% for credit_type, credit in credits.items() %}
-        <tr>
-            <td>{{ get_credit_type_chinese_str(credit_type) }}</td>
-            {% if credit["pass_status"] == 1 %} <!-- 最後一個學期可把剩餘學分修完 -->
-                <td {{ get_color_style_html("#ffc107") }}>{{ credit["observed_credits"] }}</td>
-            {% elif credit["pass_status"] == 2 %} <!-- 最後一個學期沒辦法剩下學分修完 -->
-                <td {{ get_color_style_html("#dc3545") }}>{{ credit["observed_credits"] }}</td>
-            {% else %} <!-- 已經不需要修更多學分了 -->
-                <td>{{ credit["observed_credits"] }}</td>
-            {% end %}
+            <tr>
+                <th scope="row">總學分</th>
+                <td>{{ sum(credits) }}</td>
+                <td>150</td>
+            </tr>
 
-            <td>{{ credit["required_credits"] }}</td>
-        </tr>
-        {% end %}
+            {% if class_number <= 17 or class_number == 19 %}
+                <tr>
+                    <th scope="row">必修學分</th>
+                    <td {{ get_credit_status_style(credits[0] + credits[1], final_credit[0] + final_credit[1], 102) }}>
+                        {{ credits[0] + credits[1] }}
+                    </td>
+                    <td>102</td>
+                </tr>
+                <tr>
+                    <th scope="row">選修學分</th>
+                    <td {{ get_credit_status_style(credits[2], final_credit[2], 40) }}>{{ credits[2] }}</td>
+                    <td>40</td>
+                </tr>
+            {% elif class_number == 18 %}
+                <tr>
+                    <th scope="row">部定必修學分</th>
+                    <td {{ get_credit_status_style(credits[0], final_credit[0], 80) }}>{{ credits[0] }}</td>
+                    <td>80</td>
+                </tr>
+                <tr>
+                    <th scope="row">校定必修學分</th>
+                    <td {{ get_credit_status_style(credits[1], final_credit[1], 24) }}>{{ credits[1] }}</td>
+                    <td>24</td>
+                </tr>
+                <tr>
+                    <th scope="row">選修學分</th>
+                    <td {{ get_credit_status_style(credits[2], final_credit[2], 37) }}>{{ credits[2] }}</td>
+                    <td>37</td>
+                </tr>
+            {% end %}
         </tbody>
     </table>
     {% else %}
