@@ -1,9 +1,12 @@
 import aiohttp
 
+import asyncio
 from services.cache import CacheService
 
 timeout = aiohttp.ClientTimeout(total=20)
-client_session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=5), timeout=timeout)
+async def create_session():
+    return aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=5, ssl=False), timeout=timeout)
+client_session = asyncio.get_event_loop().run_until_complete(create_session())
 
 
 class Service:

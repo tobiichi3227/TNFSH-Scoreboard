@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "TNFSH-Scoreboard"
+version = "0.1.0"
+description = ""
+authors = ["tobiichi3227 <cz1346219@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fake-useragent="^2.1.0"
+tornado="^6.4.2"
+aiohttp="^3.11.16"
+orjson="^3.10.16"
+beautifulsoup4="^4.13.3"
+ddddocr="^1.5.6"
