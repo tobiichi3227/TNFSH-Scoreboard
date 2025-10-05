@@ -107,6 +107,9 @@
                             } else if (res === "Eneedresetpw") {
                                 show_error('校務系統要求180天要更改密碼，但並不影響使用');
                                 setTimeout(() => login_redirect(), 2000);
+                            } else if (res === "Emissingddddocr" ) {
+                                show_error('無法使用自動辨識驗證碼，將改成手動輸入');
+                                switch_to_manual_validate();
                             } else {
                                 change_validate_code();
                                 show_error('帳號或密碼或驗證碼錯誤');

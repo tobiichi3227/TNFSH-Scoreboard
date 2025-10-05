@@ -46,7 +46,7 @@ class LoginHandler(RequestHandler):
             validate_src = self.get_argument("validate_src")
             using_ocr = self.get_argument("using_ocr")
 
-            if validate_code is None:
+            if validate_code == "" and using_ocr != "true":
                 await self.error(Errors.WrongValidateCode)
                 return
 
@@ -62,6 +62,10 @@ class LoginHandler(RequestHandler):
                 # Remove "data:image/jpeg;base64," from picture base64 encoded string
                 validate_pic = validate_pic[validate_pic.find(",") + 1:]
                 validate_code = get_validate_code(base64.b64decode(validate_pic))
+                if validate_code is Errors.MissingDDDDOCR:
+                    await self.error(validate_code)
+                    return
+                assert isinstance(validate_code, str)
 
             if len(validate_code) > 4:
                 await self.error(Errors.WrongValidateCode)

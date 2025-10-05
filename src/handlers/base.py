@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Any
 
 import tornado.template
 import tornado.web
@@ -16,6 +15,7 @@ class Errors(Enum):
     WrongPasswordOrAccount = "Ewrongpwacct"
     WrongValidateCode = "Ewrongvalidatecode"
     WrongTooManyTimes = "Ewrongtoomany"
+    MissingDDDDOCR = "Emissingddddocr"
     NeedResetPassword = "Eneedresetpw"
     WrongParam = "Eparam"
     RemoteServer = "Eremote"

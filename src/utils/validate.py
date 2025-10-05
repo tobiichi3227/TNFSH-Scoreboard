@@ -1,7 +1,16 @@
-import ddddocr
+from handlers.base import Errors
 
-OCR = ddddocr.DdddOcr()
+try:
+    import ddddocr
+except Exception:
+    ddddocr = None
+    pass
+
+if ddddocr is not None:
+    OCR = ddddocr.DdddOcr()
 
 
-def get_validate_code(img_bytes: bytes):
-    return OCR.classification(img_bytes).lower()
+def get_validate_code(img_bytes: bytes) -> str | Errors:
+    if ddddocr is not None:
+        return OCR.classification(img_bytes).lower()
+    return Errors.MissingDDDDOCR
