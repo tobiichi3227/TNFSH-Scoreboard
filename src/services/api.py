@@ -636,7 +636,7 @@ async def forget_password(account: str, username: str, idnumber: str, birth: str
 
 
 def _parse_tr(section_tr: bs4.Tag, section_number: int, curriculum: dict[int, str]):
-    for (weekday, course_td) in enumerate(section_tr.select("td")[2:]):
+    for weekday, course_td in enumerate(section_tr.select("td")[2:], start=1):
         teacher_texts = []
         for a in course_td.select('a'):
             if a is not None:
@@ -655,7 +655,7 @@ def _parse_tr(section_tr: bs4.Tag, section_number: int, curriculum: dict[int, st
         if course_name == "":
             continue
 
-        curriculum[(weekday + 1) * 10 + (section_number + 1)] = course_name
+        curriculum[weekday * 10 + (section_number)] = course_name
 
 
 @timeout_handle
@@ -684,10 +684,10 @@ async def get_curriculum(class_number: int) -> ReturnType:
     curriculum = {}
 
     trs = soup.select('table > tr')
-    for i in range(3, 6 + 1):
+    for i in range(4, 7 + 1):
         _parse_tr(trs[i - 1], i - 3, curriculum)
-    for i in range(9, 12 + 1):
-        _parse_tr(trs[i - 2], i - 5, curriculum)
+    for i in range(10, 13 + 1):
+        _parse_tr(trs[i - 1], i - 5, curriculum)
 
     CacheService.inst.set(class_number, curriculum)
     return Errors.Success, curriculum
