@@ -1,19 +1,14 @@
 {% from utils.htmlgen import get_color_style_html, get_leave_request_review_status_str, get_long_absence_reason_str, get_short_absence_reason_str %}
-
 <script>
-    function get_response_message_div(message) { return `<div class="alert alert-warning alert-dismissible" role="alert"> ${message} </div>` };
-
     function init() {
         document.getElementById("term_select").addEventListener('change', event => {
             let url = '{{ base_url }}/leave/?';
             const [std_seme_id] = event.target.value.split(",");
-
             if (std_seme_id === "-1") {
                 return;
             }
 
             url += `&stdSemeId=${std_seme_id}`;
-
             route.go(url);
         });
 
@@ -68,111 +63,130 @@
                 });
             });
         });
-
-
-
-        let new_leave_form = document.getElementById("newLeaveFormDialog");
-        let new_leave_form_modal = new bootstrap.Modal(new_leave_form);
-        document.querySelector('#newLeaveFormButton').addEventListener('click', () => {
-            new_leave_form_modal.show();
-        });
-
-        function show_message(message) {
-            let print = new_leave_form.querySelector("#print");
-            let wrapper = document.createElement("div");
-            wrapper.innerHTML = get_response_message_div(message);
-            print.appendChild(wrapper);
-            setTimeout(() => {
-                print.innerHTML = '';
-            }, 1500);
-        }
-
         function convertROCCalendar(date) {
             let [year, month, day] = date.split("-");
             let rocYear = parseInt(year) - 1911;
             return `${rocYear}/${month}/${day}`;
         }
 
-        new_leave_form.querySelector('button.submit').addEventListener('click', () => {
-            let reason = new_leave_form.querySelector('input.reason').value;
-            if (reason === "") {
-                show_message("事由不可為空");
-                return;
-            }
-            let leavetype = new_leave_form.querySelector('input[name="leavetype"]:checked')?.value
-            if (leavetype === undefined) {
-                show_message("類型不可為空");
-                return;
-            }
+        const { createApp, ref, useTemplateRef } = Vue;
+        createApp({
+            setup() {
+                const leavetype_desc = {'2': '事假', '3': '病假', '4': '喪假', '5': '公假', 'I': '身心假', 'W': '生理假'};
+                const lesson_desc = {'r': '朝會', '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六', '7': '七', '8': '八', 'q': '午休'};
+                const week_desc = {'1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六', '0': '日'};
+                const error_message = ref('');
+                const reason = ref('');
+                const leavetype = ref('');
+                const from_date = ref('');
+                const to_date = ref('');
+                const weeks = ref([]);
+                const lessons = ref([]);
+                let file = null;
 
-            let from_date = new_leave_form.querySelector('input.from-date').value;
-            let to_date = new_leave_form.querySelector('input.to-date').value;
-            if (from_date === "" || to_date === "") {
-                show_message("日期不可為空");
-                return;
-            }
-            if ((new Date(from_date)) > (new Date(to_date))) {
-                show_message("起始日期不能大於結束日期");
-                return;
-            }
+                const show_message = (msg) => {
+                    error_message.value = msg;
+                    setTimeout(() => {
+                        error_message.value = '';
+                    }, 1500);
+                }
 
-            from_date = convertROCCalendar(from_date);
-            to_date = convertROCCalendar(to_date);
+                const handle_file_change = (event) => {
+                    if (event.target.files.length === 0) {
+                        file = null;
+                        return;
+                    }
+                    file = event.target.files[0];
+                }
 
-
-
-            let files = new_leave_form.querySelector('input.file').files;
-            if (files.length === 0) {
-                show_message("附件不可為空");
-                return;
-            }
-
-            let file = files[0];
-            let filename = file.name;
-            if (file.size >= 5 * 1024 * 1024) {
-                show_message("附件檔案不可大於 5 MiB");
-                return;
-            }
-
-            const allowedTypes = ["image/jpeg", "image/png", "application/pdf", "image/gif"];
-            if (!allowedTypes.includes(file.type)) {
-                show_message("只能上傳 jpeg, png, pdf, gif 格式的檔案");
-                return;
-            }
-
-            let weeks = "";
-            new_leave_form.querySelectorAll('input.btn-check.week:checked').forEach(el => weeks = weeks + el.value);
-            if (weeks === "") {
-                show_message("星期不可為空");
-                return;
-            }
-
-            let lessons = "";
-            new_leave_form.querySelectorAll('input.btn-check.lesson:checked').forEach(el => lessons = lessons + el.value);
-            if (lessons === "") {
-                show_message("節次不可為空");
-                return;
-            }
-
-            post(`${this.base_url}/be/leave`, {
-                reqtype: 'new',
-                reason: reason,
-                leavetype: leavetype,
-                from_date: from_date,
-                to_date: to_date,
-                file: file,
-                filename: filename,
-                weeks: weeks,
-                lessons: lessons,
-            }).then(response => {
-                return response.text();
-            }).then(res => {
-                if (res[0] == 'S') {
+                const close = () => {
+                    reason.value = '';
+                    leavetype.value = '';
+                    from_date.value = '';
+                    to_date.value = '';
+                    weeks.value = [];
+                    lessons.value = [];
+                    file = null;
+                    error_message.value = '';
                     new_leave_form_modal.hide();
-                    route.reload();
-                } else show_message(res);
-            });
-        });
+                }
+
+                const submit = () => {
+                    if (reason.value === '') {
+                        show_message('事由不可為空');
+                        return;
+                    }
+                    if (leavetype.value === '') {
+                        show_message('類型不可為空');
+                        return;
+                    }
+                    if (from_date.value === '' || to_date.value === '') {
+                        show_message('日期不可為空');
+                        return;
+                    }
+                    if ((new Date(from_date.value)) > (new Date(to_date.value))) {
+                        show_message('起始日期不能大於結束日期');
+                        return;
+                    }
+                    const from_date_roc = convertROCCalendar(from_date.value);
+                    const to_date_roc = convertROCCalendar(to_date.value);
+
+                    if (weeks.value.length === 0) {
+                        show_message('星期不可為空');
+                        return;
+                    }
+                    if (lessons.value.length === 0) {
+                        show_message('節次不可為空');
+                        return;
+                    }
+
+                    if (file === null) {
+                        show_message('附件不可為空');
+                        return;
+                    }
+                    const filename = file.name;
+                    if (file.size >= 5 * 1024 * 1024) {
+                        show_message('附件檔案不可大於 5 MiB');
+                        return;
+                    }
+                    const allowedTypes = ["image/jpeg", "image/png", "application/pdf", "image/gif"];
+                    if (!allowedTypes.includes(file.type)) {
+                        show_message('只能上傳 jpeg, png, pdf, gif 格式的檔案');
+                        return;
+                    }
+
+                    post(`${this.base_url}/be/leave`, {
+                        reqtype: 'new',
+                        reason: reason.value,
+                        leavetype: leavetype.value,
+                        from_date: from_date_roc,
+                        to_date: to_date_roc,
+                        file: file,
+                        filename: filename,
+                        weeks: weeks.value.join(''),
+                        lessons: lessons.value.join(''),
+                    }).then(response => {
+                        return response.text();
+                    }).then(res => {
+                        if (res[0] == 'S') {
+                            close();
+                            route.reload();
+                        } else show_message(res);
+                    });
+                }
+
+                return {
+                    error_message,
+                    reason, leavetype, from_date, to_date, weeks, lessons,
+                    leavetype_desc, lesson_desc, week_desc,
+                    handle_file_change, submit, close,
+                }
+            }
+        }).mount('#app');
+
+        let new_leave_form = document.getElementById("newLeaveFormDialog");
+        let new_leave_form_modal = new bootstrap.Modal(new_leave_form);
+        document.querySelector('#newLeaveFormButton').addEventListener('click', () => new_leave_form_modal.show());
     }
 
     init();
@@ -180,122 +194,70 @@
 
 <div class="modal fade" id="newLeaveFormDialog" tabindex="-1" aria-hidden="true">
 <div class="modal-dialog modal-dialog-scrollable modal-lg modal-dialog-centered">
-    <div class="modal-content">
+    <div id="app" class="modal-content">
         <div class="modal-body">
             <form>
                 <div class="mt-2">
-                    <label for="" class="form-label">請假事由</label>
-                    <input class="form-control reason" type="text">
+                    <label class="form-label">請假事由</label>
+                    <input v-model="reason" class="form-control" type="text">
                 </div>
 
                 <div class="mt-2">
-                    <label for="" class="form-label">日期</label>
+                    <label class="form-label">日期</label>
                         <div class="input-group">
-                            <input class="form-control from-date" type="date">
+                            <input v-model="from_date" class="form-control" type="date">
                             <span class="input-group-text">~</span>
-                            <input class="form-control to-date" type="date">
+                            <input v-model="to_date" class="form-control" type="date">
                         </div>
                 </div>
 
                 <div class="mt-2">
-                    <label for="" class="form-label">請假類型</label>
+                    <label class="form-label">請假類型</label>
                     <br/>
                     <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
-                        <input type="radio" class="btn-check" name="leavetype" id="leavetype1" autocomplete="off" value="2">
-                        <label class="btn btn-outline-primary" for="leavetype1">事假</label>
-
-                        <input type="radio" class="btn-check" name="leavetype" id="leavetype2" autocomplete="off" value="3">
-                        <label class="btn btn-outline-primary" for="leavetype2">病假</label>
-
-                        <input type="radio" class="btn-check" name="leavetype" id="leavetype3" autocomplete="off" value="4">
-                        <label class="btn btn-outline-primary" for="leavetype3">喪假</label>
-
-                        <input type="radio" class="btn-check" name="leavetype" id="leavetype4" autocomplete="off" value="5">
-                        <label class="btn btn-outline-primary" for="leavetype4">公假</label>
-
-                        <input type="radio" class="btn-check" name="leavetype" id="leavetype5" autocomplete="off" value="I">
-                        <label class="btn btn-outline-primary" for="leavetype5">身心假</label>
-
-                        <input type="radio" class="btn-check" name="leavetype" id="leavetype6" autocomplete="off" value="W">
-                        <label class="btn btn-outline-primary" for="leavetype6">生理假</label>
+                        <template v-for="([type, desc]) in Object.entries(leavetype_desc)" :key="`type-${type}`">
+                            <input type="radio" class="btn-check" :id="`type-${type}`" v-model="leavetype" autocomplete="off" :value="type">
+                            <label class="btn btn-outline-primary" :for="`type-${type}`" v-text="desc"></label>
+                        </template>
                     </div>
                 </div>
 
                 <div class="mt-2">
-                    <label for="" class="form-label">星期</label>
+                    <label class="form-label">星期</label>
                     <br/>
                     <div class="btn-group" role="group">
-                        <input type="checkbox" class="btn-check week" id="week1" autocomplete="off" value="1">
-                        <label class="btn btn-outline-primary" for="week1">一</label>
-
-                        <input type="checkbox" class="btn-check week" id="week2" autocomplete="off" value="2">
-                        <label class="btn btn-outline-primary" for="week2">二</label>
-
-                        <input type="checkbox" class="btn-check week" id="week4" autocomplete="off" value="3">
-                        <label class="btn btn-outline-primary" for="week4">三</label>
-
-                        <input type="checkbox" class="btn-check week" id="week5" autocomplete="off" value="4">
-                        <label class="btn btn-outline-primary" for="week5">四</label>
-
-                        <input type="checkbox" class="btn-check week" id="week6" autocomplete="off" value="5">
-                        <label class="btn btn-outline-primary" for="week6">五</label>
-
-                        <input type="checkbox" class="btn-check week" id="week7" autocomplete="off" value="6">
-                        <label class="btn btn-outline-primary" for="week7">六</label>
-
-                        <input type="checkbox" class="btn-check week" id="week8" autocomplete="off" value="0">
-                        <label class="btn btn-outline-primary" for="week8">日</label>
+                        <template v-for="([week, desc]) in Object.entries(week_desc)" :key="`week-${week}`">
+                            <input type="checkbox" class="btn-check" :id="`week-${week}`" v-model="weeks" autocomplete="off" :value="week">
+                            <label class="btn btn-outline-primary" :for="`week-${week}`" v-text="desc"></label>
+                        </template>
                     </div>
                 </div>
 
                 <div class="mt-2">
-                    <label for="" class="form-label">節次</label>
+                    <label class="form-label">節次</label>
                     <br/>
                     <div class="btn-group btn-group-sm" role="group">
-                        <input type="checkbox" class="btn-check lesson" id="lesson11" autocomplete="off" value="r">
-                        <label class="btn btn-outline-primary" for="lesson11">朝會</label>
-
-                        <input type="checkbox" class="btn-check lesson" id="lesson1" autocomplete="off" value="1">
-                        <label class="btn btn-outline-primary" for="lesson1">一</label>
-
-                        <input type="checkbox" class="btn-check lesson" id="lesson2" autocomplete="off" value="2">
-                        <label class="btn btn-outline-primary" for="lesson2">二</label>
-
-                        <input type="checkbox" class="btn-check lesson" id="lesson3" autocomplete="off" value="3">
-                        <label class="btn btn-outline-primary" for="lesson3">三</label>
-
-                        <input type="checkbox" class="btn-check lesson" id="lesson4" autocomplete="off" value="4">
-                        <label class="btn btn-outline-primary" for="lesson4">四</label>
-
-                        <input type="checkbox" class="btn-check lesson" id="lesson5" autocomplete="off" value="5">
-                        <label class="btn btn-outline-primary" for="lesson5">五</label>
-
-                        <input type="checkbox" class="btn-check lesson" id="lesson6" autocomplete="off" value="6">
-                        <label class="btn btn-outline-primary" for="lesson6">六</label>
-
-                        <input type="checkbox" class="btn-check lesson" id="lesson7" autocomplete="off" value="7">
-                        <label class="btn btn-outline-primary" for="lesson7">七</label>
-
-                        <input type="checkbox" class="btn-check lesson" id="lesson8" autocomplete="off" value="8">
-                        <label class="btn btn-outline-primary" for="lesson8">八</label>
-
-                        <input type="checkbox" class="btn-check lesson" id="lesson10" autocomplete="off" value="q">
-                        <label class="btn btn-outline-primary" for="lesson10">午休</label>
+                        <template v-for="([lesson, desc]) in Object.entries(lesson_desc)" :key="`lesson-${lesson}`">
+                            <input type="checkbox" class="btn-check" :id="`lesson-${lesson}`" v-model="lessons" autocomplete="off" :value="lesson">
+                            <label class="btn btn-outline-primary" :for="`lesson-${lesson}`" v-text="desc"></label>
+                        </template>
                     </div>
                 </div>
 
                 <div class="mt-2">
                     <label for="" class="form-label">上傳附件</label>
-                    <input type="file" class="form-control file">
+                    <input @change="handle_file_change" type="file" class="form-control">
                 </div>
 
-                <div class="mt-2" id="print"></div>
+                <div v-show="error_message !== ''" class="mt-2">
+                    <div class="alert alert-warning alert-dismissible" role="alert" v-text="error_message"></div>
+                </div>
             </form>
         </div>
 
         <div class="modal-footer">
-            <button type="button" class="btn btn-primary submit">Submit</button>
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button @click="submit" type="button" class="btn btn-primary">Submit</button>
+            <button @click="close" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         </div>
     </div>
 </div>
@@ -337,7 +299,12 @@
 
                 <div id="collapse{{ leave_request_id }}" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
                     <div class="accordion-body">
-                        <p>審核者: {{ r["reviewer"] }}</p>
+                        {% if r["reviewer"] is None %}
+                            <p>審核者: 無</p>
+                        {% else %}
+                            <p>審核者: {{ r["reviewer"] }}</p>
+                        {% end %}
+
                         {% if r["reject_reason"] %}
                             <p>退回事由: {{ r["reject_reason"] }}</p>
                         {% end %}

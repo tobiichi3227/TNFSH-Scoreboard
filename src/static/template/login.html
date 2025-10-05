@@ -1,159 +1,138 @@
 <script>
-    function change_validate_code() {
-        get('{{ base_url }}/be/validate').then(response => {
-            return response.text();
-        }).then(res => {
-            if (res[0] === "E") {
-                if (res == "Eremote") {
-                    let print = form.querySelector("#print");
-                    let wrapper = document.createElement("div");
-                    wrapper.innerHTML = get_response_message_div('校務系統驗證碼出現異常');
-                    print.appendChild(wrapper);
-                    setTimeout(() => {
-                        print.innerHTML = '';
-                    }, 1500);
-                    form.classList.remove("was-validated");
-                }
-                return;
-            }
-
-            res = JSON.parse(res);
-            let validatePic = document.getElementById('validatePic');
-            validatePic.setAttribute('src', res.picture);
-            validatePic.setAttribute('src_src', res.src);
-        });
-    }
-
-    function get_response_message_div(message) { return `<div class="alert alert-warning alert-dismissible" role="alert"> ${message} </div>` };
-
-    function login() {
-        if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            location.href = "{{ base_url }}/exam/";
-            return;
-        }
-
-        if (route.prev_url == null) {
-            location.href = "{{ base_url }}/info/";
-        } else {
-            location.href = route.prev_url;
-        }
-    }
-
     function init() {
-        (() => {
-            let manual = document.getElementById('manualValidate');
-            manual.addEventListener('click', _ => {
-                document.querySelector("#InputValidate").setAttribute('required', '');
-                let section = document.getElementById('validateSection');
-                section.querySelectorAll('.validate').forEach(el => {
-                    el.style.display = '';
-                })
-                manual.style.display = 'none';
-                change_validate_code();
-            });
-        })();
+        const { createApp, ref, useTemplateRef } = Vue;
+        createApp({
+            setup() {
+                const login_form = useTemplateRef("login_form");
+                const account = ref('');
+                const password = ref('');
+                const validate_code = ref('');
+                const validate_picture = ref('');
+                const validate_src = ref('');
+                const error_message = ref('');
+                const manual_validate = ref(false);
+                const password_visible = ref(false);
 
-        document.getElementById('validatePic').addEventListener('click', _ => {
-            change_validate_code();
-        });
-
-        document.getElementById('togglePasswordVisible').addEventListener('click', event => {
-            event.preventDefault();
-            let password = document.getElementById("InputPassword");
-            let eye_open = document.getElementById("eyeOpen");
-            let eye_close = document.getElementById("eyeClose");
-
-            if (password.getAttribute('type') === 'password') {
-                password.setAttribute('type', 'text');
-                eye_open.style.display = 'none';
-                eye_close.style.display = 'block';
-            } else {
-                password.setAttribute('type', 'password');
-                eye_open.style.display = 'block';
-                eye_close.style.display = 'none';
-            }
-        });
-
-        document.querySelector('button.submit').addEventListener('click', event => {
-            let form = document.getElementById("loginForm");
-            let flag = false;
-
-            form.querySelectorAll('.needs-validation').forEach(el => {
-                if (!el.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    flag = true;
-                }
-
-                el.classList.add('was-validated');
-            })
-
-            if (flag) {
-                form.classList.add('was-validated');
-                return;
-            }
-
-            let mail = form.querySelector("#InputEmail").value;
-            let password = form.querySelector('#InputPassword').value;
-            let validate_code = form.querySelector('#InputValidate').value;
-            let validate_src = form.querySelector("#validatePic").getAttribute('src_src');
-            let using_ocr = document.getElementById('manualValidate').style.display !== 'none';
-
-            post('{{ base_url }}/be/login', {
-                reqtype: 'login',
-                username: mail,
-                password: password,
-                validate_src: validate_src,
-                validate_code: validate_code,
-                using_ocr: using_ocr,
-            }).then(response => {
-                return response.text();
-            }).then(res => {
-                if (res[0] === "E") {
-                    let print = form.querySelector("#print");
-                    let wrapper = document.createElement("div");
-
-                    if (res === "Ewrongpwacct") {
-                        change_validate_code();
-                        wrapper.innerHTML = get_response_message_div('帳號或密碼錯誤');
-                        form.querySelector("#InputPassword").value = "";
-                        form.querySelector("#InputValidate").value = "";
-
-                    } else if (res === "Ewrongvalidatecode") {
-                        change_validate_code();
-                        wrapper.innerHTML = get_response_message_div('驗證碼錯誤');
-                        form.querySelector("#InputValidate").value = "";
-
-                    } else if (res === "Ewrongtoomany") {
-                        wrapper.innerHTML = get_response_message_div('錯誤次數過多，校務系統鎖定15分鐘無法登入');
-
-                    } else if (res === "Eremote") {
-                        wrapper.innerHTML = get_response_message_div('校務系統出現異常，目前無法登入');
-
-                    } else if (res === "Eneedresetpw") {
-                        wrapper.innerHTML = get_response_message_div('校務系統要求180天要更改密碼，但並不影響使用')
-                        setTimeout(() => login(), 2000);
-                    } else {
-                        change_validate_code();
-                        wrapper.innerHTML = get_response_message_div('帳號或密碼或驗證碼錯誤');
-                        form.querySelector("#InputPassword").value = "";
-                        form.querySelector("#InputValidate").value = "";
+                const login_redirect = () => {
+                    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                        location.href = "{{ base_url }}/exam/";
+                        return;
                     }
 
-                    print.appendChild(wrapper);
-                    setTimeout(() => {
-                        print.innerHTML = '';
-                    }, 1500);
-                    form.classList.remove("was-validated");
-
-                } else {
-                    login();
+                    if (route.prev_url == null) {
+                        location.href = "{{ base_url }}/info/";
+                    } else {
+                        location.href = route.prev_url;
+                    }
                 }
-            });
-        });
-    }
 
-    init();
+                const show_error = (msg) => {
+                    error_message.value = msg;
+                    setTimeout(() => {
+                        error_message.value = '';
+                    }, 1500);
+                }
+
+                const change_validate_code = () => {
+                    get('{{ base_url }}/be/validate').then(response => {
+                        return response.text();
+                    }).then(res => {
+                        if (res[0] === "E" && res == "Eremote") {
+                            show_error('校務系統驗證碼出現異常');
+                            return;
+                        }
+
+                        res = JSON.parse(res);
+                        validate_picture.value = res.picture;
+                        validate_src.value = res.src;
+                    });
+                }
+
+                const toggle_password_visible = () => {
+                    password_visible.value = !password_visible.value;
+                }
+
+                const switch_to_manual_validate = () => {
+                    manual_validate.value = true;
+                    change_validate_code();
+                }
+
+                const reset_input = () => {
+                    account.value = '';
+                    password.value = '';
+                    validate_code.value = '';
+                }
+
+                const login = () => {
+                    let form = login_form.value;
+                    let flag = false;
+
+                    form.querySelectorAll('.needs-validation').forEach(el => {
+                        if (!el.checkValidity()) {
+                            flag = true;
+                        }
+                        el.classList.add('was-validated');
+                    });
+
+                    if (flag) {
+                        form.classList.add('was-validated');
+                        return;
+                    }
+
+                    post('{{ base_url }}/be/login', {
+                        reqtype: 'login',
+                        username: account.value,
+                        password: password.value,
+                        validate_src: validate_src.value,
+                        validate_code: validate_code.value,
+                        using_ocr: !manual_validate.value,
+                    }).then(response => {
+                        return response.text();
+                    }).then(res => {
+                        if (res[0] === "E") {
+                            if (res === "Ewrongpwacct") {
+                                change_validate_code();
+                                show_error('帳號或密碼錯誤');
+                                reset_input();
+                            } else if (res === "Ewrongvalidatecode") {
+                                change_validate_code();
+                                show_error('驗證碼錯誤');
+                                validate_code.value = '';
+
+                            } else if (res === "Ewrongtoomany") {
+                                show_error('錯誤次數過多，校務系統鎖定15分鐘無法登入');
+
+                            } else if (res === "Eremote") {
+                                show_error('校務系統出現異常，目前無法登入');
+                            } else if (res === "Eneedresetpw") {
+                                show_error('校務系統要求180天要更改密碼，但並不影響使用');
+                                setTimeout(() => login_redirect(), 2000);
+                            } else {
+                                change_validate_code();
+                                show_error('帳號或密碼或驗證碼錯誤');
+                                reset_input();
+                            }
+
+                            form.classList.remove("was-validated");
+                        } else {
+                            login_redirect();
+                        }
+                    });
+                };
+                return {
+                    account, password, password_visible,
+                    validate_code, validate_picture, validate_src, manual_validate,
+                    error_message,
+                    login_form,
+                    login,
+                    toggle_password_visible,
+                    switch_to_manual_validate,
+                    change_validate_code,
+                }
+            }
+        }).mount('#login');
+    }
+    init()
 </script>
 
 <style>
@@ -166,33 +145,34 @@
 
 <div class="row row-cols-1 row-cols-lg-3 justify-content-center align-content-center" style="height: 100%;">
     <div id="login" class="col mt-1">
-        <form id="loginForm" style="padding-top: 25%;">
+        <form ref="login_form" style="padding-top: 25%;">
             <h3 class="text-center">登入</h3>
             <h5 class="text-center">帳號密碼與原本校務成績系統所使用的相同</h5>
             <div class="mb-4">
-                <input type="text" id="InputEmail" class="form-control needs-validation" placeholder="Account" required/>
-                <div class="invalid-feedback">請輸入Email</div>
+                <input type="text" v-model="account" class="form-control needs-validation" placeholder="Account" required/>
+                <div class="invalid-feedback">請輸入帳號</div>
             </div>
             <div class="mb-4">
                 <div class="input-group">
-                    <input type="password" id="InputPassword" class="form-control needs-validation" placeholder="Password" required/>
-                    <button type="button" class="input-group-text" aria-label="password eye" id="togglePasswordVisible">
-                        <svg id="eyeOpen" width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 11C4.80285 11 2.52952 9.62184 1.09622 7.50001C2.52952 5.37816 4.80285 4 7.5 4C10.1971 4 12.4705 5.37816 13.9038 7.50001C12.4705 9.62183 10.1971 11 7.5 11ZM7.5 3C4.30786 3 1.65639 4.70638 0.0760002 7.23501C-0.0253338 7.39715 -0.0253334 7.60288 0.0760014 7.76501C1.65639 10.2936 4.30786 12 7.5 12C10.6921 12 13.3436 10.2936 14.924 7.76501C15.0253 7.60288 15.0253 7.39715 14.924 7.23501C13.3436 4.70638 10.6921 3 7.5 3ZM7.5 9.5C8.60457 9.5 9.5 8.60457 9.5 7.5C9.5 6.39543 8.60457 5.5 7.5 5.5C6.39543 5.5 5.5 6.39543 5.5 7.5C5.5 8.60457 6.39543 9.5 7.5 9.5Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
-                        <svg id="eyeClose" style="display: none;" width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.3536 2.35355C13.5488 2.15829 13.5488 1.84171 13.3536 1.64645C13.1583 1.45118 12.8417 1.45118 12.6464 1.64645L10.6828 3.61012C9.70652 3.21671 8.63759 3 7.5 3C4.30786 3 1.65639 4.70638 0.0760002 7.23501C-0.0253338 7.39715 -0.0253334 7.60288 0.0760014 7.76501C0.902945 9.08812 2.02314 10.1861 3.36061 10.9323L1.64645 12.6464C1.45118 12.8417 1.45118 13.1583 1.64645 13.3536C1.84171 13.5488 2.15829 13.5488 2.35355 13.3536L4.31723 11.3899C5.29348 11.7833 6.36241 12 7.5 12C10.6921 12 13.3436 10.2936 14.924 7.76501C15.0253 7.60288 15.0253 7.39715 14.924 7.23501C14.0971 5.9119 12.9769 4.81391 11.6394 4.06771L13.3536 2.35355ZM9.90428 4.38861C9.15332 4.1361 8.34759 4 7.5 4C4.80285 4 2.52952 5.37816 1.09622 7.50001C1.87284 8.6497 2.89609 9.58106 4.09974 10.1931L9.90428 4.38861ZM5.09572 10.6114L10.9003 4.80685C12.1039 5.41894 13.1272 6.35031 13.9038 7.50001C12.4705 9.62183 10.1971 11 7.5 11C6.65241 11 5.84668 10.8639 5.09572 10.6114Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                    <input :type="password_visible ? 'text' : 'password'" v-model="password" class="form-control needs-validation" placeholder="Password" required/>
+                    <button @click="toggle_password_visible" type="button" class="input-group-text" aria-label="password eye">
+                        <svg v-if="!password_visible" width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.5 11C4.80285 11 2.52952 9.62184 1.09622 7.50001C2.52952 5.37816 4.80285 4 7.5 4C10.1971 4 12.4705 5.37816 13.9038 7.50001C12.4705 9.62183 10.1971 11 7.5 11ZM7.5 3C4.30786 3 1.65639 4.70638 0.0760002 7.23501C-0.0253338 7.39715 -0.0253334 7.60288 0.0760014 7.76501C1.65639 10.2936 4.30786 12 7.5 12C10.6921 12 13.3436 10.2936 14.924 7.76501C15.0253 7.60288 15.0253 7.39715 14.924 7.23501C13.3436 4.70638 10.6921 3 7.5 3ZM7.5 9.5C8.60457 9.5 9.5 8.60457 9.5 7.5C9.5 6.39543 8.60457 5.5 7.5 5.5C6.39543 5.5 5.5 6.39543 5.5 7.5C5.5 8.60457 6.39543 9.5 7.5 9.5Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+                        <svg v-else width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.3536 2.35355C13.5488 2.15829 13.5488 1.84171 13.3536 1.64645C13.1583 1.45118 12.8417 1.45118 12.6464 1.64645L10.6828 3.61012C9.70652 3.21671 8.63759 3 7.5 3C4.30786 3 1.65639 4.70638 0.0760002 7.23501C-0.0253338 7.39715 -0.0253334 7.60288 0.0760014 7.76501C0.902945 9.08812 2.02314 10.1861 3.36061 10.9323L1.64645 12.6464C1.45118 12.8417 1.45118 13.1583 1.64645 13.3536C1.84171 13.5488 2.15829 13.5488 2.35355 13.3536L4.31723 11.3899C5.29348 11.7833 6.36241 12 7.5 12C10.6921 12 13.3436 10.2936 14.924 7.76501C15.0253 7.60288 15.0253 7.39715 14.924 7.23501C14.0971 5.9119 12.9769 4.81391 11.6394 4.06771L13.3536 2.35355ZM9.90428 4.38861C9.15332 4.1361 8.34759 4 7.5 4C4.80285 4 2.52952 5.37816 1.09622 7.50001C1.87284 8.6497 2.89609 9.58106 4.09974 10.1931L9.90428 4.38861ZM5.09572 10.6114L10.9003 4.80685C12.1039 5.41894 13.1272 6.35031 13.9038 7.50001C12.4705 9.62183 10.1971 11 7.5 11C6.65241 11 5.84668 10.8639 5.09572 10.6114Z" fill="currentColor" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
                     </button>
                     <div class="invalid-feedback">請輸入密碼</div>
                 </div>
                 <a href="{{ base_url }}/forgetpw/" class="nav-item" aria-current="page">忘記密碼</a>
             </div>
-            <div class="mb-4 d-flex" id="validateSection">
-                <input type="text" maxlength="4" id="InputValidate" class="form-control validate" placeholder="Validate Code" style="width: 75%; display: none;"/>
+            <div class="mb-4 d-flex">
+                <input v-show="manual_validate" v-model="validate_code" type="text" maxlength="4" class="form-control validate" placeholder="Validate Code" style="width: 75%;"/>
                 <div class="invalid-feedback">請輸入驗證碼</div>
-                <img id="validatePic" alt="validate picture" class="ms-3 img-fluid validate" src_src="" src="" style="display: none;">
-
-                <button type="button" class="btn btn-primary mx-auto" id="manualValidate">我要手動輸入驗證碼</button>
+                <img v-show="manual_validate" @click="change_validate_code" alt="validate picture" class="ms-3 img-fluid validate" :src_src="validate_src" :src="validate_picture" style="display: none;">
+                <button @click="switch_to_manual_validate" v-show="!manual_validate" type="button" class="btn btn-primary mx-auto">我要手動輸入驗證碼</button>
             </div>
-            <div class="mb-5 mb-lg-3" id="print"></div>
-            <button type="button" class="btn btn-primary my-3 submit" aria-label="login button" tabindex="0">
+            <div v-show="error_message !== ''" class="mb-5 mb-lg-3">
+                <div class="alert alert-warning alert-dismissible" role="alert" v-text="error_message"></div>
+            </div>
+            <button @click="login" type="button" class="btn btn-primary my-3 submit" aria-label="login button" tabindex="0">
                 Login
             </button>
         </form>
