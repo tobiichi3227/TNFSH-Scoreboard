@@ -62,7 +62,8 @@ Before you begin, make sure you have the following installed:
 Run server
 
 ```
-python src/server.py
+cd src
+python server.py
 ```
 
 ## Configuration

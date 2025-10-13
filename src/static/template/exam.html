@@ -107,6 +107,7 @@
         <thead>
             <tr>
                 <th scope="col">科目</th>
+                <th scope="col">學分</th>
                 <th scope="col">分數</th>
                 <th scope="col">班排</th>
                 <th scope="col">組排</th>
@@ -118,6 +119,7 @@
         {% for score in scores %}
             <tr>
                 <td>{{ score["subject"] }}</td>
+                <td>{{ int(score["credits"]) }}</td>
 
                 {% if score["is_participated"] != "否" %}
                     <td>缺考</td>

@@ -236,6 +236,7 @@ async def get_single_exam_scores(session_key: str, item_id: str, std_seme_id: st
         "score": get_optional_str(score_obj.get("score", "")),
         "class_average": get_optional_str(score_obj.get("yl", "")),
         "is_participated": score_obj["noExamMark"],
+        "credits": score_obj["credits"],
     } for score_obj in res["dataRows"]]
 
     return Errors.Success, scores
