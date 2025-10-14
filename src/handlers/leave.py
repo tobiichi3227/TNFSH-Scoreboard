@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 import tornado.web
 
@@ -80,22 +81,30 @@ class LeaveRequestHandler(RequestHandler):
         elif reqtype == "new":
             reason = self.get_argument('reason')
             leavetype = self.get_argument('leavetype')
-            from_date = self.get_argument('from_date')
-            to_date = self.get_argument('to_date')
             filename = self.get_argument('filename')
-            weeks = self.get_argument('weeks')
-            lessons = self.get_argument('lessons')
             files = self.request.files.get("file", [])
+            leaves = json.loads(self.get_argument('leaves'))
             if len(files) == 0:
                 await self.error(Errors.WrongParam)
                 return
 
             file: bytes = files[0].body
 
-            err, msg = await add_leave_request(session_id, self.session.student_id, reason, leavetype, from_date, to_date,
-                                               lessons, weeks, file, filename)
-            if err == Errors.Success:
-                await self.error(err)
-                return
+            required_fields = ['from_date_roc', 'to_date_roc', 'lessons', 'weeks']
+            for idx, leave in enumerate(leaves, start=1):
+                for req_field in required_fields:
+                    if req_field not in leave:
+                        await self.error(Errors.WrongParam)
+                        return
 
-            self.finish(msg)
+
+                from_date = leave['from_date_roc']
+                to_date = leave['to_date_roc']
+                lessons = ''.join(leave['lessons'])
+                weeks = ''.join(leave['weeks'])
+                err, msg = await add_leave_request(session_id, self.session.student_id, reason, leavetype, from_date, to_date,
+                                                lessons, weeks, file, filename)
+                if err == Errors.Success:
+                    continue
+                else:
+                    self.write(f"第{idx}時段: {msg}\n")

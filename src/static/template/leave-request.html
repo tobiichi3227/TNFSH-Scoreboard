@@ -69,7 +69,39 @@
             return `${rocYear}/${month}/${day}`;
         }
 
-        const { createApp, ref, useTemplateRef } = Vue;
+        const { createApp, ref, reactive, onMounted, onUnmounted, nextTick } = Vue;
+
+        function useIsMobile() {
+            const mobile = ref(false);
+
+            const check = () => {
+                const ua = navigator.userAgent || navigator.vendor || window.opera || "";
+                const mobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+                const byUA = mobileUA.test(ua);
+
+                const byMQ = window.matchMedia
+                    ? window.matchMedia('(pointer: coarse) and (max-width: 900px)').matches
+                    : false;
+
+                const byTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 0);
+
+                mobile.value = byUA || (byMQ && byTouch) || (window.innerWidth <= 900);
+            };
+
+            onMounted(() => {
+                check();
+                window.addEventListener('resize', check);
+                window.addEventListener('orientationchange', check);
+            });
+
+            onUnmounted(() => {
+                window.removeEventListener('resize', check);
+                window.removeEventListener('orientationchange', check);
+            });
+
+            return mobile;
+        }
+
         createApp({
             setup() {
                 const leavetype_desc = {'2': '事假', '3': '病假', '4': '喪假', '5': '公假', 'I': '身心假', 'W': '生理假'};
@@ -78,17 +110,48 @@
                 const error_message = ref('');
                 const reason = ref('');
                 const leavetype = ref('');
-                const from_date = ref('');
-                const to_date = ref('');
-                const weeks = ref([]);
-                const lessons = ref([]);
+                const leaves = ref([]);
+                const is_mobile = useIsMobile();
                 let file = null;
+
+                const scroll_to_bottom = () => {
+                    nextTick(() => {
+                        const container = document.querySelector('#newLeaveFormDialog .modal-body');
+                        container.scrollTo({
+                            top: container.scrollHeight,
+                            behavior: 'smooth'
+                        });
+                    });
+                }
+
+                const append_leave = () => {
+                    leaves.value.push({
+                        from_date: '',
+                        to_date: '',
+                        from_date_roc: '',
+                        to_date_roc: '',
+                        weeks: [],
+                        lessons: [],
+                        expanded: true,
+                    });
+                    scroll_to_bottom();
+                }
+
+                const delete_leave = (index) => {
+                    leaves.value.splice(index, 1);
+                }
 
                 const show_message = (msg) => {
                     error_message.value = msg;
                     setTimeout(() => {
                         error_message.value = '';
                     }, 1500);
+                    scroll_to_bottom();
+                }
+
+                const toggle_collapse = (index) => {
+                    leaves.value[index].expanded = !leaves.value[index].expanded;
+                    scroll_to_bottom();
                 }
 
                 const handle_file_change = (event) => {
@@ -102,10 +165,7 @@
                 const close = () => {
                     reason.value = '';
                     leavetype.value = '';
-                    from_date.value = '';
-                    to_date.value = '';
-                    weeks.value = [];
-                    lessons.value = [];
+                    leaves.length = 0;
                     file = null;
                     error_message.value = '';
                     new_leave_form_modal.hide();
@@ -118,25 +178,6 @@
                     }
                     if (leavetype.value === '') {
                         show_message('類型不可為空');
-                        return;
-                    }
-                    if (from_date.value === '' || to_date.value === '') {
-                        show_message('日期不可為空');
-                        return;
-                    }
-                    if ((new Date(from_date.value)) > (new Date(to_date.value))) {
-                        show_message('起始日期不能大於結束日期');
-                        return;
-                    }
-                    const from_date_roc = convertROCCalendar(from_date.value);
-                    const to_date_roc = convertROCCalendar(to_date.value);
-
-                    if (weeks.value.length === 0) {
-                        show_message('星期不可為空');
-                        return;
-                    }
-                    if (lessons.value.length === 0) {
-                        show_message('節次不可為空');
                         return;
                     }
 
@@ -155,31 +196,63 @@
                         return;
                     }
 
+                    if (leaves.value.length === 0) {
+                        show_message('請至少新增一個請假日期');
+                        return;
+                    }
+
+                    for (let [idx, leave] of leaves.value.entries()) {
+                        if (leave.from_date === '' || leave.to_date === '') {
+                            show_message(`第${idx + 1}個時段的日期不可為空`);
+                            return;
+                        }
+                        if ((new Date(leave.from_date)) > (new Date(leave.to_date))) {
+                            show_message(`第${idx + 1}個時段的起始日期不能大於結束日期`);
+                            return;
+                        }
+                        if (leave.weeks.length === 0) {
+                            show_message(`第${idx + 1}個時段的星期不可為空`);
+                            return;
+                        }
+                        if (leave.lessons.length === 0) {
+                            show_message(`第${idx + 1}個時段的節次不可為空`);
+                            return;
+                        }
+                        leave.from_date_roc = convertROCCalendar(leave.from_date);
+                        leave.to_date_roc = convertROCCalendar(leave.to_date);
+                    }
+
+                    error_message.value = '校務系統處理中...';
+                    scroll_to_bottom();
+
                     post(`${this.base_url}/be/leave`, {
                         reqtype: 'new',
                         reason: reason.value,
                         leavetype: leavetype.value,
-                        from_date: from_date_roc,
-                        to_date: to_date_roc,
                         file: file,
                         filename: filename,
-                        weeks: weeks.value.join(''),
-                        lessons: lessons.value.join(''),
+                        leaves: JSON.stringify(leaves.value),
                     }).then(response => {
                         return response.text();
                     }).then(res => {
                         if (res[0] == 'S') {
                             close();
                             route.reload();
-                        } else show_message(res);
+                        } else {
+                            show_message(res);
+                            setTimeout(() => {
+                                close();
+                                route.reload();
+                            }, 1500);
+                        }
                     });
                 }
 
                 return {
-                    error_message,
-                    reason, leavetype, from_date, to_date, weeks, lessons,
+                    error_message, is_mobile,
+                    reason, leavetype, leaves,
                     leavetype_desc, lesson_desc, week_desc,
-                    handle_file_change, submit, close,
+                    append_leave, delete_leave, toggle_collapse, handle_file_change, submit, close,
                 }
             }
         }).mount('#app');
@@ -203,15 +276,6 @@
                 </div>
 
                 <div class="mt-2">
-                    <label class="form-label">日期</label>
-                        <div class="input-group">
-                            <input v-model="from_date" class="form-control" type="date">
-                            <span class="input-group-text">~</span>
-                            <input v-model="to_date" class="form-control" type="date">
-                        </div>
-                </div>
-
-                <div class="mt-2">
                     <label class="form-label">請假類型</label>
                     <br/>
                     <div class="btn-group" role="group" aria-label="Basic radio toggle button group">
@@ -223,31 +287,56 @@
                 </div>
 
                 <div class="mt-2">
-                    <label class="form-label">星期</label>
-                    <br/>
-                    <div class="btn-group" role="group">
-                        <template v-for="([week, desc]) in Object.entries(week_desc)" :key="`week-${week}`">
-                            <input type="checkbox" class="btn-check" :id="`week-${week}`" v-model="weeks" autocomplete="off" :value="week">
-                            <label class="btn btn-outline-primary" :for="`week-${week}`" v-text="desc"></label>
-                        </template>
-                    </div>
-                </div>
-
-                <div class="mt-2">
-                    <label class="form-label">節次</label>
-                    <br/>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <template v-for="([lesson, desc]) in Object.entries(lesson_desc)" :key="`lesson-${lesson}`">
-                            <input type="checkbox" class="btn-check" :id="`lesson-${lesson}`" v-model="lessons" autocomplete="off" :value="lesson">
-                            <label class="btn btn-outline-primary" :for="`lesson-${lesson}`" v-text="desc"></label>
-                        </template>
-                    </div>
-                </div>
-
-                <div class="mt-2">
                     <label for="" class="form-label">上傳附件</label>
                     <input @change="handle_file_change" type="file" class="form-control">
                 </div>
+
+                <button type="button" @click="append_leave" class="btn btn-primary mt-2">New</button>
+
+                <template v-for="(leave, index) in leaves" :key="`leave-${index}`">
+                    <div class="border border-2 rounded p-1 mt-2">
+                        <div class="mt-2">
+                            <div class="d-flex align-items-baseline">
+                                <label class="form-label">日期</label>
+                                <button type="button" @click="toggle_collapse(index)" data-bs-toggle="collapse" :data-bs-target="`#leave-${index}-details`" class="btn btn-sm btn-secondary ms-auto">
+                                    <span v-if="leave.expanded">Hide</span>
+                                    <span v-else>Expand</span>
+                                </button>
+                                <button type="button" @click="delete_leave(index)" class="btn btn-sm ms-1 btn-danger">Delete</button>
+                            </div>
+
+                            <div class="input-group">
+                                <input v-model="leave.from_date" class="form-control" type="date">
+                                <span class="input-group-text">~</span>
+                                <input v-model="leave.to_date" class="form-control" type="date">
+                            </div>
+                        </div>
+
+                        <div class="collapse show" :id="`leave-${index}-details`">
+                            <div class="mt-2">
+                                <label class="form-label">星期</label>
+                                <br/>
+                                <div class="btn-group" role="group">
+                                    <template v-for="([week, desc]) in Object.entries(week_desc)" :key="`week-${week}`">
+                                        <input type="checkbox" class="btn-check" :id="`leave-${index}-week-${week}`" v-model="leave.weeks" autocomplete="off" :value="week">
+                                        <label class="btn btn-outline-primary" :for="`leave-${index}-week-${week}`" v-text="desc"></label>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div class="mt-2">
+                                <label class="form-label">節次</label>
+                                <br/>
+                                <div class="btn-group btn-group-sm" :class="{ 'flex-wrap': is_mobile, 'gap-2': is_mobile }" role="group">
+                                    <template v-for="([lesson, desc]) in Object.entries(lesson_desc)" :key="`lesson-${lesson}`">
+                                        <input type="checkbox" class="btn-check" :id="`leave-${index}-lesson-${lesson}`" v-model="leave.lessons" autocomplete="off" :value="lesson">
+                                        <label class="btn btn-outline-primary" :for="`leave-${index}-lesson-${lesson}`" v-text="desc"></label>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
 
                 <div v-show="error_message !== ''" class="mt-2">
                     <div class="alert alert-warning alert-dismissible" role="alert" v-text="error_message"></div>
