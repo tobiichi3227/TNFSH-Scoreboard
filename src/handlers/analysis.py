@@ -1,13 +1,26 @@
 import tornado.web
-import json
+import tornado.escape
 
 from handlers.base import RequestHandler, reqenv, Errors
-from services.api import get_all_semester_info, get_school_year_data, get_single_exam_scores, get_exam_stats
+from services.api import get_all_semester_info, get_school_year_data, get_single_exam_scores
 
 
 class AnalysisHandler(RequestHandler):
+    """
+    Handler for the grade analysis page.
+    
+    Fetches all exam scores across all semesters for the logged-in student
+    and renders them in an interactive chart for analysis.
+    """
+    
     @reqenv
     async def get(self):
+        """
+        GET endpoint for the analysis page.
+        
+        Retrieves all semester information, fetches scores for each exam,
+        and passes the data to the template for visualization.
+        """
         if self.session is None:
             await self.render("goto-login.html")
             return
@@ -26,8 +39,10 @@ class AnalysisHandler(RequestHandler):
             s_id, year, seme = std["stdSemeId"], std["syear"], std["seme"]
             err, school_year_data = await get_school_year_data(session_id, int(year), int(seme))
             if err == Errors.RemoteServer:
-                await self.render_remote_server_err()
-                return
+                # Log error but continue with other semesters
+                import traceback
+                print(f"Error fetching school year data for year {year}, semester {seme}")
+                continue
 
             for item in school_year_data:
                 item_id = item["itemId"]
@@ -35,10 +50,8 @@ class AnalysisHandler(RequestHandler):
                 # Get scores for this exam
                 err, scores = await get_single_exam_scores(session_id, item_id, s_id)
                 if err == Errors.RemoteServer:
-                    continue
-                    
-                err, stats = await get_exam_stats(session_id, item_id, s_id)
-                if err == Errors.RemoteServer:
+                    # Log error but continue with other exams
+                    print(f"Error fetching scores for exam {item_id}")
                     continue
 
                 all_exams.append({
@@ -48,13 +61,12 @@ class AnalysisHandler(RequestHandler):
                     "seme": seme,
                     "exam_name": item["exam_name"],
                     "scores": scores,
-                    "stats": stats
                 })
 
         # Sort by year and semester (most recent first)
         all_exams.sort(key=lambda x: (-int(x["year"]), -int(x["seme"])))
 
-        # Convert to JSON for JavaScript
-        all_exams_json = json.dumps(all_exams)
+        # Convert to JSON for JavaScript - use json_encode for safety
+        all_exams_json = tornado.escape.json_encode(all_exams)
 
         await self.render("analysis.html", all_exams_json=all_exams_json)

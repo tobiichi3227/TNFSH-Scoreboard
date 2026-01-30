@@ -1,5 +1,7 @@
 {% from utils.htmlgen import get_color_style_html%}
 
+{% from utils.htmlgen import get_color_style_html%}
+
 <style>
 .gray-line {
     border:0;
@@ -17,10 +19,12 @@
 }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" 
+        integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb" 
+        crossorigin="anonymous"></script>
 
 <script>
-    let allExams = {{ !all_exams_json }};
+    let allExams = {% raw all_exams_json %};
     let currentChart = null;
     let currentSubject = null;
     let currentSortBy = 'chronological';
@@ -73,14 +77,14 @@
         allExams.forEach(exam => {
             const score = exam.scores.find(s => s.subject === subject);
             if (score && score.score !== "" && score.is_participated !== "否") {
-                const semeLabel = exam.seme == 1 ? "上" : "下";
+                const semeLabel = exam.seme === 1 ? "上" : "下";
                 data.push({
                     label: `${exam.year} ${semeLabel} ${exam.exam_name}`,
                     score: parseFloat(score.score),
-                    classRank: score.class_rank !== "" && score.class_rank !== undefined ? parseInt(score.class_rank) : null,
-                    groupRank: score.group_rank !== "" && score.group_rank !== undefined ? parseInt(score.group_rank) : null,
+                    classRank: score.class_rank !== "" && score.class_rank !== undefined ? parseInt(score.class_rank, 10) : null,
+                    groupRank: score.group_rank !== "" && score.group_rank !== undefined ? parseInt(score.group_rank, 10) : null,
                     examDate: `${exam.year}-${exam.seme}`,
-                    examOrder: parseInt(exam.year) * 10 + parseInt(exam.seme)
+                    examOrder: parseInt(exam.year, 10) * 10 + parseInt(exam.seme, 10)
                 });
             }
         });
@@ -105,6 +109,10 @@
     }
 
     function renderChart(data) {
+        if (!currentSubject || currentSubject === "-1") {
+            return;
+        }
+        
         const ctx = document.getElementById('growthChart');
         
         if (currentChart) {
@@ -242,8 +250,8 @@
             <option value="chronological">時間順序</option>
             <option value="score-asc">分數由低到高</option>
             <option value="score-desc">分數由高到低</option>
-            <option value="class-rank">班排由高到低</option>
-            <option value="group-rank">組排由高到低</option>
+            <option value="class-rank">班排由前到後（1→n）</option>
+            <option value="group-rank">組排由前到後（1→n）</option>
         </select>
     </div>
 
