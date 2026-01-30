@@ -49,7 +49,7 @@ class AnalysisHandler(RequestHandler):
                 exam_name = item["exam_name"]
                 
                 # Filter out semester grades and regular grades - these are not exams
-                if "學期成績" in exam_name or "平常成績" in exam_name:
+                if exam_name and ("學期成績" in exam_name or "平常成績" in exam_name):
                     continue
                 
                 # Get scores for this exam - prefer report API for class_rank and group_rank
