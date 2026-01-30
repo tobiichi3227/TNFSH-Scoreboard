@@ -28,6 +28,7 @@
     let currentChart = null;
     let currentSubject = null;
     let currentSortBy = 'chronological';
+    let currentRankType = 'none'; // none, class, group
 
     function init() {
         // Populate subject dropdown
@@ -61,6 +62,13 @@
 
         document.getElementById("sort_select").addEventListener('change', event => {
             currentSortBy = event.target.value;
+            if (currentSubject && currentSubject !== "-1") {
+                updateChart();
+            }
+        });
+
+        document.getElementById("rank_select").addEventListener('change', event => {
+            currentRankType = event.target.value;
             if (currentSubject && currentSubject !== "-1") {
                 updateChart();
             }
@@ -123,8 +131,6 @@
 
         const labels = data.map(d => d.label);
         const scores = data.map(d => d.score);
-        const classRanks = data.map(d => d.classRank);
-        const groupRanks = data.map(d => d.groupRank);
 
         const datasets = [{
             label: '分數',
@@ -135,25 +141,28 @@
             yAxisID: 'y'
         }];
 
-        // Only add ranking datasets if data exists and not in score-only sort mode
-        if (currentSortBy === 'chronological') {
-            if (classRanks.some(r => r !== null)) {
-                datasets.push({
-                    label: '班排',
-                    data: classRanks,
-                    borderColor: 'rgb(255, 99, 132)',
-                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                    tension: 0.4,
-                    yAxisID: 'y1'
-                });
+        // Only add ranking dataset if selected and data exists and in chronological mode
+        if (currentSortBy === 'chronological' && currentRankType !== 'none') {
+            let rankData = null;
+            let rankLabel = '';
+            let rankColor = '';
+            
+            if (currentRankType === 'class') {
+                rankData = data.map(d => d.classRank);
+                rankLabel = '班排';
+                rankColor = 'rgb(255, 99, 132)';
+            } else if (currentRankType === 'group') {
+                rankData = data.map(d => d.groupRank);
+                rankLabel = '組排';
+                rankColor = 'rgb(153, 102, 255)';
             }
-
-            if (groupRanks.some(r => r !== null)) {
+            
+            if (rankData && rankData.some(r => r !== null)) {
                 datasets.push({
-                    label: '組排',
-                    data: groupRanks,
-                    borderColor: 'rgb(153, 102, 255)',
-                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    label: rankLabel,
+                    data: rankData,
+                    borderColor: rankColor,
+                    backgroundColor: rankColor.replace('rgb', 'rgba').replace(')', ', 0.2)'),
                     tension: 0.4,
                     yAxisID: 'y1'
                 });
@@ -257,6 +266,15 @@
         </select>
     </div>
 
+    <div class="col-12 col-md-6 my-2">
+        <label for="rank_select" class="form-label">排名顯示：</label>
+        <select class="form-select" id="rank_select">
+            <option value="none">不顯示排名</option>
+            <option value="class">班排</option>
+            <option value="group">組排</option>
+        </select>
+    </div>
+
     <div class="col-12 my-4">
         <div class="chart-container">
             <canvas id="growthChart"></canvas>
@@ -271,6 +289,7 @@
                 <li>時間順序：按考試時間順序排列</li>
                 <li>分數排序：按分數高低排列數據點</li>
                 <li>班排/組排：按排名順序排列（僅顯示有排名資料的考試）</li>
+                <li>排名顯示：選擇要在圖表中顯示的排名類型（班排或組排），因為它們的比較基準不同</li>
                 <li>圖表中可查看分數趨勢和排名變化</li>
             </ul>
         </div>
