@@ -20,7 +20,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <script>
-    let allExams = {{ all_exams }};
+    let allExams = {{ !all_exams_json }};
     let currentChart = null;
     let currentSubject = null;
     let currentSortBy = 'chronological';

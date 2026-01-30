@@ -1,4 +1,5 @@
 import tornado.web
+import json
 
 from handlers.base import RequestHandler, reqenv, Errors
 from services.api import get_all_semester_info, get_school_year_data, get_single_exam_scores, get_exam_stats
@@ -53,4 +54,7 @@ class AnalysisHandler(RequestHandler):
         # Sort by year and semester (most recent first)
         all_exams.sort(key=lambda x: (-int(x["year"]), -int(x["seme"])))
 
-        await self.render("analysis.html", all_exams=all_exams)
+        # Convert to JSON for JavaScript
+        all_exams_json = json.dumps(all_exams)
+
+        await self.render("analysis.html", all_exams_json=all_exams_json)
