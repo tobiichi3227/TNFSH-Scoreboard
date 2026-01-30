@@ -34,7 +34,8 @@
         const subjects = new Set();
         allExams.forEach(exam => {
             exam.scores.forEach(score => {
-                if (score.score !== "" && score.is_participated !== "否") {
+                // Only include subjects where student participated (is_participated === "否")
+                if (score.score !== "" && score.is_participated === "否") {
                     subjects.add(score.subject);
                 }
             });
@@ -76,7 +77,8 @@
 
         allExams.forEach(exam => {
             const score = exam.scores.find(s => s.subject === subject);
-            if (score && score.score !== "" && score.is_participated !== "否") {
+            // Only include exams where student participated (is_participated === "否")
+            if (score && score.score !== "" && score.is_participated === "否") {
                 const semeLabel = exam.seme === 1 ? "上" : "下";
                 data.push({
                     label: `${exam.year} ${semeLabel} ${exam.exam_name}`,

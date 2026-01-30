@@ -2,7 +2,7 @@ import tornado.web
 import tornado.escape
 
 from handlers.base import RequestHandler, reqenv, Errors
-from services.api import get_all_semester_info, get_school_year_data, get_single_exam_scores
+from services.api import get_all_semester_info, get_school_year_data, get_single_exam_scores, get_single_exam_scores_and_stats_from_report
 
 
 class AnalysisHandler(RequestHandler):
@@ -47,12 +47,22 @@ class AnalysisHandler(RequestHandler):
             for item in school_year_data:
                 item_id = item["itemId"]
                 
-                # Get scores for this exam
-                err, scores = await get_single_exam_scores(session_id, item_id, s_id)
-                if err == Errors.RemoteServer:
-                    # Log error but continue with other exams
-                    print(f"Error fetching scores for exam {item_id}")
-                    continue
+                # Get scores for this exam - prefer report API for class_rank and group_rank
+                scores = []
+                try:
+                    err, report_data = await get_single_exam_scores_and_stats_from_report(session_id, int(year), int(seme), item_id)
+                    if err == Errors.Success and report_data:
+                        scores = report_data["scores"]
+                except Exception as e:
+                    print(f"Error fetching report data for exam {item_id}: {e}")
+                
+                # Fallback to regular API if report API fails
+                if not scores:
+                    err, scores = await get_single_exam_scores(session_id, item_id, s_id)
+                    if err == Errors.RemoteServer:
+                        # Log error but continue with other exams
+                        print(f"Error fetching scores for exam {item_id}")
+                        continue
 
                 all_exams.append({
                     "stdSemeId": s_id,
