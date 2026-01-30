@@ -46,6 +46,11 @@ class AnalysisHandler(RequestHandler):
 
             for item in school_year_data:
                 item_id = item["itemId"]
+                exam_name = item["exam_name"]
+                
+                # Filter out semester grades and regular grades - these are not exams
+                if "學期成績" in exam_name or "平常成績" in exam_name:
+                    continue
                 
                 # Get scores for this exam - prefer report API for class_rank and group_rank
                 scores = []
@@ -73,7 +78,7 @@ class AnalysisHandler(RequestHandler):
                     "itemId": item_id,
                     "year": year,
                     "seme": seme,
-                    "exam_name": item["exam_name"],
+                    "exam_name": exam_name,
                     "scores": scores,
                 })
 
