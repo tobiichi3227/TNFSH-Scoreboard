@@ -53,6 +53,10 @@ class AnalysisHandler(RequestHandler):
                     err, report_data = await get_single_exam_scores_and_stats_from_report(session_id, int(year), int(seme), item_id)
                     if err == Errors.Success and report_data:
                         scores = report_data["scores"]
+                        # Report API doesn't include is_participated, set default value "否" (participated)
+                        for score in scores:
+                            if "is_participated" not in score:
+                                score["is_participated"] = "否"
                 except Exception as e:
                     print(f"Error fetching report data for exam {item_id}: {e}")
                 
