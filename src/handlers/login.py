@@ -67,7 +67,7 @@ class LoginHandler(RequestHandler):
                     return
                 assert isinstance(validate_code, str)
 
-            if len(validate_code) > 4:
+            if len(validate_code) != 4:
                 await self.error(Errors.WrongValidateCode)
                 return
 

@@ -167,7 +167,7 @@
                 <a href="{{ base_url }}/forgetpw/" class="nav-item" aria-current="page">忘記密碼</a>
             </div>
             <div class="mb-4 d-flex">
-                <input v-show="manual_validate" v-model="validate_code" type="text" maxlength="4" class="form-control validate" placeholder="Validate Code" style="width: 75%;"/>
+                <input v-show="manual_validate" v-model="validate_code" type="text" minlength="4" maxlength="4" class="form-control validate" :class="manual_validate ? 'needs-validation' : ''" placeholder="Validate Code" style="width: 75%;" :required="manual_validate"/>
                 <div class="invalid-feedback">請輸入驗證碼</div>
                 <img v-show="manual_validate" @click="change_validate_code" alt="validate picture" class="ms-3 img-fluid validate" :src_src="validate_src" :src="validate_picture" style="display: none;">
                 <button @click="switch_to_manual_validate" v-show="!manual_validate" type="button" class="btn btn-primary mx-auto">我要手動輸入驗證碼</button>
