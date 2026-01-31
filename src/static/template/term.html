@@ -15,7 +15,7 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const stdSemeId = urlParams.get('stdSemeId');
                     
-                    let url = `{{ base_url }}/be/term?format=json&cache=${new Date().getTime()}`;
+                    let url = `${route.base_url}/be/term?format=json&cache=${new Date().getTime()}`;
                     if (stdSemeId) {
                         url += `&stdSemeId=${stdSemeId}`;
                         selected_term.value = stdSemeId;
@@ -47,7 +47,7 @@
                         return;
                     }
 
-                    let url = `{{ base_url }}/term/?stdSemeId=${std_seme_id}`;
+                    let url = `${route.base_url}/term/?stdSemeId=${std_seme_id}`;
                     route.go(url);
                 };
 

@@ -52,7 +52,7 @@ table.highlight th:first-child {
                     const year = urlParams.get('year');
                     const seme = urlParams.get('seme');
                     
-                    let url = `{{ base_url }}/be/absence?format=json&cache=${new Date().getTime()}`;
+                    let url = `${route.base_url}/be/absence?format=json&cache=${new Date().getTime()}`;
                     if (year && seme) {
                         url += `&year=${year}&seme=${seme}`;
                         selected_semester.value = `${year},${seme}`;
@@ -83,7 +83,7 @@ table.highlight th:first-child {
                         return;
                     }
 
-                    let url = `{{ base_url }}/absence/?year=${year}&seme=${seme}`;
+                    let url = `${route.base_url}/absence/?year=${year}&seme=${seme}`;
                     route.go(url);
                 };
 

@@ -27,7 +27,7 @@
                     const itemId = urlParams.get('itemId');
                     const stdSemeId = urlParams.get('stdSemeId');
                     
-                    let url = `{{ base_url }}/be/exam?format=json&cache=${new Date().getTime()}`;
+                    let url = `${route.base_url}/be/exam?format=json&cache=${new Date().getTime()}`;
                     if (itemId && stdSemeId) {
                         url += `&itemId=${itemId}&stdSemeId=${stdSemeId}`;
                         selected_exam.value = `${stdSemeId},${itemId}`;
@@ -53,7 +53,7 @@
                         return;
                     }
 
-                    let url = `{{ base_url }}/exam/?`;
+                    let url = `${route.base_url}/exam/?`;
                     url += `stdSemeId=${std_seme_id}`;
                     url += `&itemId=${item_id}`;
 

@@ -10,7 +10,7 @@
 
                 const loadData = async () => {
                     loading.value = true;
-                    let url = `{{ base_url }}/be/graduation?format=json&cache=${new Date().getTime()}`;
+                    let url = `${route.base_url}/be/graduation?format=json&cache=${new Date().getTime()}`;
 
                     try {
                         const response = await get(url);
