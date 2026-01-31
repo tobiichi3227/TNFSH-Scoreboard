@@ -151,6 +151,13 @@ table.highlight th:first-child {
     init();
 </script>
 
+<style>
+.date-vertical {
+  display: flex;
+  flex-direction: column;
+}
+</style>
+
 <div id="absence-app" class="row">
     <div v-if="loading" class="text-center my-5">
         <div class="spinner-border text-secondary" role="status">
@@ -187,14 +194,22 @@ table.highlight th:first-child {
                     <thead>
                         <tr>
                             <th scope="col">
-                                <span>年</span>
-                                <span>月</span>
-                                <span>日</span>
-                                <span>星期</span>
+                                <div class="date-vertical">
+                                    <span>年</span>
+                                    <span>月</span>
+                                    <span>日</span>
+                                    <span>星期</span>
+                                </div>
                             </th>
                             <th v-for="absence in absences" :key="absence.date" scope="col">
-                                <span v-for="(part, index) in getDateParts(absence.date)" :key="index" v-text="part"></span>
-                                <span v-text="getWeekday(absence.date)"></span>
+                                <div class="date-vertical">
+                                    <span
+                                    v-for="(part, index) in getDateParts(absence.date)"
+                                    :key="index"
+                                    v-text="part"
+                                    ></span>
+                                    <span v-text="getWeekday(absence.date)"></span>
+                                </div>
                             </th>
                         </tr>
                     </thead>

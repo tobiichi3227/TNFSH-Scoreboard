@@ -190,7 +190,7 @@
 
                 <tbody>
                     <tr v-for="score in scores" :key="score.subject">
-                        <td v-text="score.subject"></td>
+                        <th scope="row" v-text="score.subject"></td>
                         <td v-text="parseInt(score.credits)"></td>
                         <td :style="formatScore(score).failed ? 'color: #dc3545' : ''"
                             v-text="formatScore(score).text"></td>
