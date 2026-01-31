@@ -91,6 +91,10 @@ table.highlight th:first-child {
                     return seme === 1 ? "上" : "下";
                 };
 
+                const getAbsenceOptionText = (score_obj) => {
+                    return `${score_obj.year} ${getSemeName(score_obj.seme)}`;
+                };
+
                 const getShortAbsenceReason = (code) => {
                     return ABSENCE_SHORT_REASON[code] || "";
                 };
@@ -132,6 +136,7 @@ table.highlight th:first-child {
                     loading,
                     onSemesterChange,
                     getSemeName,
+                    getAbsenceOptionText,
                     getShortAbsenceReason,
                     getLongAbsenceReason,
                     getWeekday,
@@ -157,8 +162,8 @@ table.highlight th:first-child {
             <option value="-1,-1">請選擇學期</option>
             <option v-for="score_obj in item_ids" 
                     :key="`${score_obj.year}-${score_obj.seme}`"
-                    :value="`${score_obj.year},${score_obj.seme}`">
-                {{ score_obj.year }} {{ getSemeName(score_obj.seme) }}
+                    :value="`${score_obj.year},${score_obj.seme}`"
+                    :textContent="getAbsenceOptionText(score_obj)">
             </option>
         </select>
 

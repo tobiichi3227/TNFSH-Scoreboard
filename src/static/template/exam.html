@@ -64,6 +64,10 @@
                     return seme === 1 ? "上" : "下";
                 };
 
+                const getExamOptionText = (score_obj) => {
+                    return `${score_obj.year} ${getSemeName(score_obj.seme)} ${score_obj.exam_name}`;
+                };
+
                 const formatScore = (score) => {
                     if (score.is_participated !== "否") {
                         return { text: "缺考", failed: false };
@@ -121,6 +125,7 @@
                     loading,
                     onExamChange,
                     getSemeName,
+                    getExamOptionText,
                     formatScore,
                     formatRank,
                     formatAverage,
@@ -144,8 +149,8 @@
             <option value="-1,-1">請選擇段考</option>
             <option v-for="score_obj in item_ids" 
                     :key="`${score_obj.stdSemeId}-${score_obj.itemId}`"
-                    :value="`${score_obj.stdSemeId},${score_obj.itemId}`">
-                {{ score_obj.year }} {{ getSemeName(score_obj.seme) }} {{ score_obj.exam_name }}
+                    :value="`${score_obj.stdSemeId},${score_obj.itemId}`"
+                    :textContent="getExamOptionText(score_obj)">
             </option>
         </select>
 

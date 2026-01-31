@@ -55,6 +55,10 @@
                     return seme === 1 ? "上" : "下";
                 };
 
+                const getTermOptionText = (score_obj) => {
+                    return `${score_obj.year} ${getSemeName(score_obj.seme)}`;
+                };
+
                 const formatValue = (value) => {
                     if (!value || value === "") {
                         return "尚未公布";
@@ -106,6 +110,7 @@
                     loading,
                     onTermChange,
                     getSemeName,
+                    getTermOptionText,
                     formatValue,
                     getScoreColor,
                     getCreditColor,
@@ -129,8 +134,8 @@
             <option value="-1">請選擇學期</option>
             <option v-for="score_obj in item_ids" 
                     :key="score_obj.stdSemeId"
-                    :value="String(score_obj.stdSemeId)">
-                {{ score_obj.year }} {{ getSemeName(score_obj.seme) }}
+                    :value="String(score_obj.stdSemeId)"
+                    :textContent="getTermOptionText(score_obj)">
             </option>
         </select>
 

@@ -56,6 +56,10 @@
                     return seme === 1 ? "上" : "下";
                 };
 
+                const getRewardOptionText = (score_obj) => {
+                    return `${score_obj.year} ${getSemeName(score_obj.seme)}`;
+                };
+
                 const getRewardChineseStr = (rewardArr) => {
                     const res = [];
                     const names = REWARD_NAMES;
@@ -88,6 +92,7 @@
                     loading,
                     onSemesterChange,
                     getSemeName,
+                    getRewardOptionText,
                     getRewardChineseStr,
                     getCancelStr,
                     REWARD_NAMES,
@@ -109,8 +114,8 @@
             <option value="-1,-1">請選擇學期</option>
             <option v-for="score_obj in item_ids" 
                     :key="`${score_obj.year}-${score_obj.seme}`"
-                    :value="`${score_obj.year},${score_obj.seme}`">
-                {{ score_obj.year }} {{ getSemeName(score_obj.seme) }}
+                    :value="`${score_obj.year},${score_obj.seme}`"
+                    :textContent="getRewardOptionText(score_obj)">
             </option>
         </select>
 

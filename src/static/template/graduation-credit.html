@@ -57,6 +57,10 @@
                     return classNumber.value === 18;
                 });
 
+                const semesterCreditsText = computed(() => {
+                    return `本學期部定必修學分: ${final_credit.value[0]} 校訂必修學分: ${final_credit.value[1]} 校選學分: ${final_credit.value[2]}`;
+                });
+
                 onMounted(() => {
                     loadData();
                 });
@@ -71,6 +75,7 @@
                     hasCredits,
                     isRegularClass,
                     isClass18,
+                    semesterCreditsText,
                 };
             }
         }).mount('#graduation-app');
@@ -90,7 +95,7 @@
                 <p><span style="color: #ffc107">黃色</span>表示本學期可以將剩餘的學分修完</p>
                 <p><span style="color: #dc3545">紅色</span>表示本學期沒辦法將剩餘的學分修完</p>
                 <p>可能是前五個學期學分不夠或是本學期某些學科缺席超過1/3(自己把自己當掉)</p>
-                <p>本學期部定必修學分: {{ final_credit[0] }} 校訂必修學分: {{ final_credit[1] }} 校選學分: {{ final_credit[2] }}</p>
+                <p v-text="semesterCreditsText"></p>
             </div>
             <table class="table col-12 mx-lg-3">
                 <thead>
