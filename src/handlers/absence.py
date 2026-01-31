@@ -1,6 +1,7 @@
 import datetime
 import collections
 import itertools
+import json
 
 import tornado
 
@@ -60,6 +61,18 @@ class AbsenceHandler(RequestHandler):
 
                         stats[lesson] += 1
 
+        # Return JSON for API requests
+        if self.get_argument("format", None) == "json":
+            self.set_header("Content-Type", "application/json")
+            await self.finish(json.dumps({
+                "item_ids": item_ids,
+                "absences": absences,
+                "stats": dict(stats) if stats else None,
+                "year": year,
+                "seme": seme
+            }))
+            return
+
         await self.render("absence.html", item_ids=item_ids, absences=absences, stats=stats,
                           year=year, seme=seme)
 
@@ -102,6 +115,13 @@ class SubjectAbsenceCountHandler(RequestHandler):
 
         subject_absence_cnts = collections.defaultdict(int)
         if not absences:
+            # Return JSON for API requests
+            if self.get_argument("format", None) == "json":
+                self.set_header("Content-Type", "application/json")
+                await self.finish(json.dumps({
+                    "subject_absence_cnts": dict(subject_absence_cnts)
+                }))
+                return
             await self.render("subject-absence-count.html", subject_absence_cnts=subject_absence_cnts)
             return
 
@@ -126,5 +146,13 @@ class SubjectAbsenceCountHandler(RequestHandler):
                         continue
 
                     subject_absence_cnts[curr] += 1
+
+        # Return JSON for API requests
+        if self.get_argument("format", None) == "json":
+            self.set_header("Content-Type", "application/json")
+            await self.finish(json.dumps({
+                "subject_absence_cnts": dict(subject_absence_cnts)
+            }))
+            return
 
         await self.render("subject-absence-count.html", subject_absence_cnts=subject_absence_cnts)
