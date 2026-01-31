@@ -51,7 +51,7 @@ table.highlight th:first-child {
                     const urlParams = new URLSearchParams(window.location.search);
                     const year = urlParams.get('year');
                     const seme = urlParams.get('seme');
-                    
+
                     let url = `${route.base_url}/be/absence?format=json&cache=${new Date().getTime()}`;
                     if (year && seme) {
                         url += `&year=${year}&seme=${seme}`;
@@ -64,7 +64,7 @@ table.highlight th:first-child {
                         item_ids.value = data.item_ids || [];
                         absences.value = data.absences;
                         stats.value = data.stats;
-                        
+
                         // Set selected semester if not already set
                         if (!year && !seme && item_ids.value.length > 0) {
                             selected_semester.value = `${data.year},${data.seme}`;
@@ -78,7 +78,7 @@ table.highlight th:first-child {
 
                 const onSemesterChange = (event) => {
                     const [year, seme] = event.target.value.split(",");
-                    
+
                     if (year === "-1" || seme === "-1") {
                         return;
                     }
@@ -160,10 +160,10 @@ table.highlight th:first-child {
     <template v-else>
         <select class="form-select my-3 col-12" @change="onSemesterChange" v-model="selected_semester">
             <option value="-1,-1">請選擇學期</option>
-            <option v-for="score_obj in item_ids" 
+            <option v-for="score_obj in item_ids"
                     :key="`${score_obj.year}-${score_obj.seme}`"
                     :value="`${score_obj.year},${score_obj.seme}`"
-                    :textContent="getAbsenceOptionText(score_obj)">
+                    :text="getAbsenceOptionText(score_obj)">
             </option>
         </select>
 
@@ -202,7 +202,7 @@ table.highlight th:first-child {
                     <tbody>
                         <tr v-for="(timeSlot, index) in TIME_SLOTS" :key="index">
                             <td v-text="timeSlot"></td>
-                            <td v-for="absence in absences" :key="`${absence.date}-${index}`" 
+                            <td v-for="absence in absences" :key="`${absence.date}-${index}`"
                                 v-text="getShortAbsenceReason(absence.absences[index])"></td>
                         </tr>
                     </tbody>

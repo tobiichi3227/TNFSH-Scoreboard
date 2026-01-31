@@ -14,7 +14,7 @@
                     loading.value = true;
                     const urlParams = new URLSearchParams(window.location.search);
                     const stdSemeId = urlParams.get('stdSemeId');
-                    
+
                     let url = `${route.base_url}/be/term?format=json&cache=${new Date().getTime()}`;
                     if (stdSemeId) {
                         url += `&stdSemeId=${stdSemeId}`;
@@ -28,7 +28,7 @@
                         subject_scores.value = data.subject_scores;
                         term_scores.value = data.term_scores;
                         term_ranking.value = data.term_ranking;
-                        
+
                         // Set selected term if not already set
                         if (!stdSemeId && item_ids.value.length > 0) {
                             selected_term.value = String(data.std_seme_id);
@@ -42,7 +42,7 @@
 
                 const onTermChange = (event) => {
                     const std_seme_id = event.target.value;
-                    
+
                     if (std_seme_id === "-1") {
                         return;
                     }
@@ -132,10 +132,10 @@
     <template v-else>
         <select class="form-select my-3 col-12" @change="onTermChange" v-model="selected_term">
             <option value="-1">請選擇學期</option>
-            <option v-for="score_obj in item_ids" 
+            <option v-for="score_obj in item_ids"
                     :key="score_obj.stdSemeId"
                     :value="String(score_obj.stdSemeId)"
-                    :textContent="getTermOptionText(score_obj)">
+                    :text="getTermOptionText(score_obj)">
             </option>
         </select>
 
@@ -178,10 +178,10 @@
                     <tr v-for="score in subject_scores" :key="score.subject">
                         <th scope="row" v-text="score.subject"></th>
                         <td v-text="score.course_type"></td>
-                        <td :style="getCreditColor(score.score, score.pass) ? `color: ${getCreditColor(score.score, score.pass)}` : ''" 
+                        <td :style="getCreditColor(score.score, score.pass) ? `color: ${getCreditColor(score.score, score.pass)}` : ''"
                             v-text="score.credits"></td>
                         <td v-text="score.class_rank ? `${score.class_rank} / ${score.group_rank} / ${score.all_rank}` : '尚未公布'"></td>
-                        <td :style="getScoreColor(score.score) ? `color: ${getScoreColor(score.score)}` : ''" 
+                        <td :style="getScoreColor(score.score) ? `color: ${getScoreColor(score.score)}` : ''"
                             v-text="formatValue(score.score)"></td>
                         <td v-text="score.score_original"></td>
                         <td v-if="displayExamed" v-text="score.score_examed"></td>

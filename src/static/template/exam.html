@@ -26,7 +26,7 @@
                     const urlParams = new URLSearchParams(window.location.search);
                     const itemId = urlParams.get('itemId');
                     const stdSemeId = urlParams.get('stdSemeId');
-                    
+
                     let url = `${route.base_url}/be/exam?format=json&cache=${new Date().getTime()}`;
                     if (itemId && stdSemeId) {
                         url += `&itemId=${itemId}&stdSemeId=${stdSemeId}`;
@@ -48,7 +48,7 @@
 
                 const onExamChange = (event) => {
                     const [std_seme_id, item_id] = event.target.value.split(",");
-                    
+
                     if (std_seme_id === "-1" || item_id === "-1") {
                         return;
                     }
@@ -76,9 +76,9 @@
                         return { text: "尚未公布", failed: false };
                     }
                     const scoreValue = parseFloat(score.score);
-                    return { 
-                        text: score.score, 
-                        failed: scoreValue < 60 
+                    return {
+                        text: score.score,
+                        failed: scoreValue < 60
                     };
                 };
 
@@ -147,10 +147,10 @@
     <template v-else>
         <select class="form-select my-3 col-12" @change="onExamChange" v-model="selected_exam">
             <option value="-1,-1">請選擇段考</option>
-            <option v-for="score_obj in item_ids" 
+            <option v-for="score_obj in item_ids"
                     :key="`${score_obj.stdSemeId}-${score_obj.itemId}`"
                     :value="`${score_obj.stdSemeId},${score_obj.itemId}`"
-                    :textContent="getExamOptionText(score_obj)">
+                    :text="getExamOptionText(score_obj)">
             </option>
         </select>
 
@@ -192,7 +192,7 @@
                     <tr v-for="score in scores" :key="score.subject">
                         <td v-text="score.subject"></td>
                         <td v-text="parseInt(score.credits)"></td>
-                        <td :style="formatScore(score).failed ? 'color: #dc3545' : ''" 
+                        <td :style="formatScore(score).failed ? 'color: #dc3545' : ''"
                             v-text="formatScore(score).text"></td>
                         <td v-text="formatRank(score.class_rank)"></td>
                         <td v-text="formatRank(score.group_rank)"></td>
