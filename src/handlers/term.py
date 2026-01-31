@@ -1,3 +1,4 @@
+import json
 import tornado.web
 
 from handlers.base import RequestHandler, reqenv, Errors
@@ -50,5 +51,18 @@ class TermHandler(RequestHandler):
                 term_scores = term_scores[0]
             else:
                 term_scores = None
+
+        # Return JSON for API requests
+        if self.get_argument("format", None) == "json":
+            self.set_header("Content-Type", "application/json")
+            await self.finish(json.dumps({
+                "item_ids": item_ids,
+                "subject_scores": subject_scores,
+                "term_scores": term_scores,
+                "term_ranking": term_ranking,
+                "std_seme_id": std_seme_id
+            }))
+            return
+
         await self.render("term.html", item_ids=item_ids, subject_scores=subject_scores, term_scores=term_scores, term_ranking=term_ranking,
                           std_seme_id=std_seme_id)
