@@ -1,4 +1,5 @@
 import itertools
+import json
 
 import tornado.web
 
@@ -54,6 +55,18 @@ class RewardHandler(RequestHandler):
                 for reward in rewards:
                     for i in range(6):
                         stats[i] += reward["rewards"][i]
+
+        # Return JSON for API requests
+        if self.get_argument("format", None) == "json":
+            self.set_header("Content-Type", "application/json")
+            await self.finish(json.dumps({
+                "item_ids": item_ids,
+                "rewards": rewards,
+                "stats": stats,
+                "year": year,
+                "seme": seme
+            }))
+            return
 
         await self.render("reward.html", item_ids=item_ids, rewards=rewards, stats=stats,
                           year=year, seme=seme)
