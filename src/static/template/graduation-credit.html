@@ -2,27 +2,62 @@
     function init() {
         const { createApp, ref, onMounted, computed } = Vue;
         createApp({
+            components: {
+                'data-status-indicator': DataStatusIndicator
+            },
             setup() {
                 const credits = ref([0, 0, 0]);
                 const final_credit = ref([0, 0, 0]);
                 const student_class_number = ref(0);
                 const loading = ref(true);
+                const isFromCache = ref(false);
+                const isFresh = ref(false);
+                const isOffline = ref(false);
+                const formattedCacheTime = ref(null);
+                const error = ref(null);
 
                 const loadData = async () => {
                     loading.value = true;
+                    error.value = null;
                     let url = `${route.base_url}/be/graduation?format=json&cache=${new Date().getTime()}`;
 
-                    try {
-                        const response = await get(url);
-                        const data = await response.json();
-                        credits.value = data.credits || [0, 0, 0];
-                        final_credit.value = data.final_credit || [0, 0, 0];
-                        student_class_number.value = data.student_class_number || 0;
-                    } catch (error) {
-                        console.error('Failed to load graduation credit data:', error);
-                    } finally {
-                        loading.value = false;
-                    }
+                    await fetchWithCache(
+                        url,
+                        // onCachedData
+                        (data, metadata) => {
+                            credits.value = data.credits || [0, 0, 0];
+                            final_credit.value = data.final_credit || [0, 0, 0];
+                            student_class_number.value = data.student_class_number || 0;
+                            isFromCache.value = true;
+                            isFresh.value = false;
+                            formattedCacheTime.value = metadata.formattedTime;
+                            isOffline.value = !metadata.isOnline;
+                            loading.value = !metadata.isOnline;
+                        },
+                        // onFreshData
+                        (data) => {
+                            credits.value = data.credits || [0, 0, 0];
+                            final_credit.value = data.final_credit || [0, 0, 0];
+                            student_class_number.value = data.student_class_number || 0;
+                            isFromCache.value = false;
+                            isFresh.value = true;
+                            loading.value = false;
+                            formattedCacheTime.value = CacheManager.formatTimestamp(Date.now());
+                            isOffline.value = false;
+                            error.value = null;
+                        },
+                        // onError
+                        (err, hasCachedData) => {
+                            error.value = err;
+                            loading.value = false;
+                            isOffline.value = !CacheManager.isOnline();
+                            if (!hasCachedData) {
+                                credits.value = [0, 0, 0];
+                                final_credit.value = [0, 0, 0];
+                                student_class_number.value = 0;
+                            }
+                        }
+                    );
                 };
 
                 const getCreditStatusColor = (pass_c, final_c, require_c) => {
@@ -69,6 +104,11 @@
                     credits,
                     final_credit,
                     loading,
+                    isFromCache,
+                    isFresh,
+                    isOffline,
+                    formattedCacheTime,
+                    error,
                     getCreditStatusColor,
                     totalCredits,
                     classNumber,
@@ -84,7 +124,16 @@
 </script>
 
 <div id="graduation-app" class="row">
-    <div v-if="loading" class="text-center my-5">
+    <data-status-indicator
+        :loading="loading"
+        :is-from-cache="isFromCache"
+        :is-fresh="isFresh"
+        :is-offline="isOffline"
+        :formatted-cache-time="formattedCacheTime"
+        :error="error"
+    ></data-status-indicator>
+
+    <div v-if="loading && !isFromCache" class="text-center my-5">
         <div class="spinner-border text-secondary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
