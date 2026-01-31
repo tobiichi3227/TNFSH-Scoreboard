@@ -1,5 +1,3 @@
-{% from utils.htmlgen import get_color_style_html%}
-
 <style>
 .gray-line {
     border:0;
@@ -14,145 +12,194 @@
 
 <script>
     function init() {
-        document.getElementById("exam_select").addEventListener('change', event => {
-            let url = '{{ base_url }}/exam/?';
-            const [std_seme_id, item_id] = event.target.value.split(",");
+        const { createApp, ref, onMounted, computed } = Vue;
+        createApp({
+            setup() {
+                const item_ids = ref([]);
+                const scores = ref(null);
+                const stats = ref(null);
+                const selected_exam = ref("-1,-1");
+                const loading = ref(true);
 
-            if (std_seme_id === "-1" || item_id === "-1") {
-                return;
+                const loadData = async () => {
+                    loading.value = true;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const itemId = urlParams.get('itemId');
+                    const stdSemeId = urlParams.get('stdSemeId');
+
+                    let url = `${route.base_url}/be/exam?format=json&cache=${new Date().getTime()}`;
+                    if (itemId && stdSemeId) {
+                        url += `&itemId=${itemId}&stdSemeId=${stdSemeId}`;
+                        selected_exam.value = `${stdSemeId},${itemId}`;
+                    }
+
+                    try {
+                        const response = await get(url);
+                        const data = await response.json();
+                        item_ids.value = data.item_ids || [];
+                        scores.value = data.scores;
+                        stats.value = data.stats;
+                    } catch (error) {
+                        console.error('Failed to load exam data:', error);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const onExamChange = (event) => {
+                    const [std_seme_id, item_id] = event.target.value.split(",");
+
+                    if (std_seme_id === "-1" || item_id === "-1") {
+                        return;
+                    }
+
+                    let url = `${route.base_url}/exam/?`;
+                    url += `stdSemeId=${std_seme_id}`;
+                    url += `&itemId=${item_id}`;
+
+                    route.go(url);
+                };
+
+                const getSemeName = (seme) => {
+                    return seme === 1 ? "上" : "下";
+                };
+
+                const getExamOptionText = (score_obj) => {
+                    return `${score_obj.year} ${getSemeName(score_obj.seme)} ${score_obj.exam_name}`;
+                };
+
+                const formatScore = (score) => {
+                    if (score.is_participated !== "否") {
+                        return { text: "缺考", failed: false };
+                    }
+                    if (!score.score || score.score === "") {
+                        return { text: "尚未公布", failed: false };
+                    }
+                    const scoreValue = parseFloat(score.score);
+                    return {
+                        text: score.score,
+                        failed: scoreValue < 60
+                    };
+                };
+
+                const formatRank = (rank) => {
+                    if (rank === undefined || rank === null) {
+                        return "無資料";
+                    }
+                    if (rank === "") {
+                        return "尚未公佈";
+                    }
+                    return rank;
+                };
+
+                const formatAverage = (average) => {
+                    if (!average || average === "") {
+                        return "尚未公佈";
+                    }
+                    return average;
+                };
+
+                const formatStatsValue = (value) => {
+                    if (!value || value === "") {
+                        return "尚未公佈";
+                    }
+                    return value;
+                };
+
+                const formatStatsRank = (rank, cnt) => {
+                    if (!rank || rank === "") {
+                        return "尚未公佈";
+                    }
+                    return `${rank} / ${cnt}`;
+                };
+
+                onMounted(() => {
+                    loadData();
+                });
+
+                return {
+                    item_ids,
+                    scores,
+                    stats,
+                    selected_exam,
+                    loading,
+                    onExamChange,
+                    getSemeName,
+                    getExamOptionText,
+                    formatScore,
+                    formatRank,
+                    formatAverage,
+                    formatStatsValue,
+                    formatStatsRank,
+                };
             }
-
-            url += `&stdSemeId=${std_seme_id}`;
-            url += `&itemId=${item_id}`;
-
-            route.go(url);
-        });
+        }).mount('#exam-app');
     }
-
     init();
 </script>
 
-<div class="row">
-    <select class="form-select my-3 col-12" id="exam_select">
-        <option value="-1,-1">請選擇段考</option>
-        {% for score_obj in item_ids %}
-            <option value="{{ f"{score_obj['stdSemeId']},{score_obj['itemId']}" }}"
-                {% if item_id is not None and std_seme_id is not None and int(item_id) == int(score_obj['itemId']) and int(std_seme_id) == score_obj['stdSemeId'] %}
-                    selected
-                {% end %}
-            >
-                {% if score_obj["seme"] == 1 %}
-                    {% set seme = "上" %}
-                {% else %}
-                    {% set seme = "下" %}
-                {% end %}
-                {{ f"{score_obj['year']} {seme} {score_obj['exam_name']}" }}
+<div id="exam-app" class="row">
+    <div v-if="loading" class="text-center my-5">
+        <div class="spinner-border text-secondary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <template v-else>
+        <select class="form-select my-3 col-12" @change="onExamChange" v-model="selected_exam">
+            <option value="-1,-1">請選擇段考</option>
+            <option v-for="score_obj in item_ids"
+                    :key="`${score_obj.stdSemeId}-${score_obj.itemId}`"
+                    :value="`${score_obj.stdSemeId},${score_obj.itemId}`"
+                    :text="getExamOptionText(score_obj)">
             </option>
-        {% end %}
-    </select>
+        </select>
 
+        <template v-if="scores !== null">
+            <table v-if="stats !== null" class="table table-responsive-sm col-12 mx-lg-3">
+                <thead>
+                    <tr>
+                        <th scope="col">總分</th>
+                        <th scope="col">平均</th>
+                        <th scope="col">班排</th>
+                        <th scope="col">組排</th>
+                        <th scope="col">校排</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td v-text="formatStatsValue(stats.score_sum)"></td>
+                        <td v-text="stats.average ? Math.round(parseFloat(stats.average) * 100) / 100 : '尚未公佈'"></td>
+                        <td v-text="formatStatsRank(stats.class_rank, stats.class_cnt)"></td>
+                        <td v-text="formatStatsRank(stats.group_rank, stats.group_cnt)"></td>
+                        <td v-text="formatStatsRank(stats.all_rank, stats.all_cnt)"></td>
+                    </tr>
+                </tbody>
+            </table>
 
-    {% if scores is not None %}
+            <table class="table col-12 mx-lg-3 my-3">
+                <thead>
+                    <tr>
+                        <th scope="col">科目</th>
+                        <th scope="col">學分</th>
+                        <th scope="col">分數</th>
+                        <th scope="col">班排</th>
+                        <th scope="col">組排</th>
+                        <th scope="col">班平均</th>
+                    </tr>
+                </thead>
 
-    {% if stats is not None %}
-    <table class="table table-responsive-sm col-12 mx-lg-3">
-        <thead>
-            <tr>
-                <th scope="col">總分</th>
-                <th scope="col">平均</th>
-                <th scope="col">班排</th>
-                <th scope="col">組排</th>
-                <th scope="col">校排</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                {% if (score_sum := stats["score_sum"]) == "" %}
-                    <td>尚未公佈</td>
-                {% else %}
-                    <td>{{ score_sum }}</td>
-                {% end %}
-
-                {% if (average := stats["average"]) != "" %}
-                    <td>{{ round(float(average), 2) }}</td>
-                {% else %}
-                    <td>尚未公佈</td>
-                {% end %}
-
-                {% if stats['class_rank'] == "" %}
-                    <td>尚未公佈</td>
-                {% else %}
-                    <td>{{ f"{stats['class_rank']} / {stats['class_cnt']}" }}</td>
-                {% end %}
-
-                {% if stats['group_rank'] == "" %}
-                    <td>尚未公佈</td>
-                {% else %}
-                    <td>{{ f"{stats['group_rank']} / {stats['group_cnt']}" }}</td>
-                {% end %}
-
-                {% if stats['all_rank'] == "" %}
-                    <td>尚未公佈</td>
-                {% else %}
-                    <td>{{ f"{stats['all_rank']} / {stats['all_cnt']}" }}</td>
-                {% end %}
-
-            </tr>
-        </tbody>
-    </table>
-    {% end %}
-
-
-    <table class="table col-12 mx-lg-3 my-3">
-        <thead>
-            <tr>
-                <th scope="col">科目</th>
-                <th scope="col">學分</th>
-                <th scope="col">分數</th>
-                <th scope="col">班排</th>
-                <th scope="col">組排</th>
-                <th scope="col">班平均</th>
-            </tr>
-        </thead>
-
-        <tbody>
-        {% for score in scores %}
-            <tr>
-                <td>{{ score["subject"] }}</td>
-                <td>{{ int(score["credits"]) }}</td>
-
-                {% if score["is_participated"] != "否" %}
-                    <td>缺考</td>
-                {% elif (s := score["score"]) == "" %}
-                    <td>尚未公佈</td>
-                {% else %}
-                    <td {% if int(float(s)) < 60 %} {{ get_color_style_html("#dc3545") }} {% end %}>{{ s }}</td>
-                {% end %}
-
-                {% if score.get("class_rank") is None %}
-                    <td>無資料</td>
-                {% elif (class_rank := score["class_rank"]) == "" %}
-                    <td>尚未公佈</td>
-                {% else %}
-                    <td>{{ class_rank }}</td>
-                {% end %}
-
-                {% if score.get("group_rank") is None %}
-                    <td>無資料</td>
-                {% elif (group_rank := score["group_rank"]) == "" %}
-                    <td>尚未公佈</td>
-                {% else %}
-                    <td>{{ group_rank }}</td>
-                {% end %}
-
-                {% if (class_average := score["class_average"]) == "" %}
-                    <td>尚未公佈</td>
-                {% else %}
-                    <td>{{ class_average }}</td>
-                {% end %}
-            </tr>
-        {% end %}
-        </tbody>
-    </table>
-    {% end %}
+                <tbody>
+                    <tr v-for="score in scores" :key="score.subject">
+                        <th scope="row" v-text="score.subject"></td>
+                        <td v-text="parseInt(score.credits)"></td>
+                        <td :style="formatScore(score).failed ? 'color: #dc3545' : ''"
+                            v-text="formatScore(score).text"></td>
+                        <td v-text="formatRank(score.class_rank)"></td>
+                        <td v-text="formatRank(score.group_rank)"></td>
+                        <td v-text="formatAverage(score.class_average)"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </template>
+    </template>
 </div>

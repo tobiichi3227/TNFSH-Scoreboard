@@ -1,96 +1,160 @@
-{% from utils.htmlgen import get_reward_chinese_str %}
-
 <script>
     function init() {
-        document.getElementById("reward_select").addEventListener('change', event => {
-            let url = '{{ base_url }}/reward/?';
-            const [year, seme] = event.target.value.split(",");
+        const { createApp, ref, onMounted } = Vue;
+        createApp({
+            setup() {
+                const item_ids = ref([]);
+                const rewards = ref(null);
+                const stats = ref(null);
+                const selected_semester = ref("-1,-1");
+                const loading = ref(true);
 
-            if (year === "-1" || seme === "-1") {
-                return;
+                const REWARD_NAMES = ["嘉獎", "小功", "大功", "警告", "小過", "大過"];
+
+                const loadData = async () => {
+                    loading.value = true;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const year = urlParams.get('year');
+                    const seme = urlParams.get('seme');
+
+                    let url = `${route.base_url}/be/reward?format=json&cache=${new Date().getTime()}`;
+                    if (year && seme) {
+                        url += `&year=${year}&seme=${seme}`;
+                        selected_semester.value = `${year},${seme}`;
+                    }
+
+                    try {
+                        const response = await get(url);
+                        const data = await response.json();
+                        item_ids.value = data.item_ids || [];
+                        rewards.value = data.rewards;
+                        stats.value = data.stats;
+
+                        // Set selected semester if not already set
+                        if (!year && !seme && item_ids.value.length > 0) {
+                            selected_semester.value = `${data.year},${data.seme}`;
+                        }
+                    } catch (error) {
+                        console.error('Failed to load reward data:', error);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const onSemesterChange = (event) => {
+                    const [year, seme] = event.target.value.split(",");
+
+                    if (year === "-1" || seme === "-1") {
+                        return;
+                    }
+
+                    let url = `${route.base_url}/reward/?year=${year}&seme=${seme}`;
+                    route.go(url);
+                };
+
+                const getSemeName = (seme) => {
+                    return seme === 1 ? "上" : "下";
+                };
+
+                const getRewardOptionText = (score_obj) => {
+                    return `${score_obj.year} ${getSemeName(score_obj.seme)}`;
+                };
+
+                const getRewardChineseStr = (rewardArr) => {
+                    const res = [];
+                    const names = REWARD_NAMES;
+
+                    for (let i = 0; i < 6; i++) {
+                        if (rewardArr[i] > 0) {
+                            res.push(`${names[i]}${rewardArr[i]}支 `);
+                        }
+                    }
+
+                    return res.join('');
+                };
+
+                const getCancelStr = (cancel) => {
+                    if (!cancel || cancel === "") {
+                        return "";
+                    }
+                    return cancel === "N" ? "否" : "是";
+                };
+
+                onMounted(() => {
+                    loadData();
+                });
+
+                return {
+                    item_ids,
+                    rewards,
+                    stats,
+                    selected_semester,
+                    loading,
+                    onSemesterChange,
+                    getSemeName,
+                    getRewardOptionText,
+                    getRewardChineseStr,
+                    getCancelStr,
+                    REWARD_NAMES,
+                };
             }
-
-            url += `&year=${year}`;
-            url += `&seme=${seme}`;
-
-            route.go(url);
-        });
+        }).mount('#reward-app');
     }
-
     init();
 </script>
 
-<div class="row">
-    <select class="form-select my-3 col-12" id="reward_select">
-        <option value="-1,-1">請選擇學期</option>
-        {% for score_obj in item_ids %}
-            <option value="{{ f"{score_obj['year']},{score_obj['seme']}" }}"
-                {% if year is not None and seme is not None and int(year) == int(score_obj['year']) and int(seme) == int(score_obj['seme']) %}
-                    selected
-                {% end %}
-            >
-                {% if score_obj["seme"] == 1 %}
-                    {% set str_seme = "上" %}
-                {% else %}
-                    {% set str_seme = "下" %}
-                {% end %}
-                {{ f"{score_obj['year']} {str_seme} " }}
+<div id="reward-app" class="row">
+    <div v-if="loading" class="text-center my-5">
+        <div class="spinner-border text-secondary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <template v-else>
+        <select class="form-select my-3 col-12" @change="onSemesterChange" v-model="selected_semester">
+            <option value="-1,-1">請選擇學期</option>
+            <option v-for="score_obj in item_ids"
+                    :key="`${score_obj.year}-${score_obj.seme}`"
+                    :value="`${score_obj.year},${score_obj.seme}`"
+                    :text="getRewardOptionText(score_obj)">
             </option>
-        {% end %}
-    </select>
+        </select>
 
+        <template v-if="rewards !== null">
+            <table class="table table-sm col-12 mx-lg-3 my-3">
+                <thead>
+                    <tr>
+                        <th v-for="name in REWARD_NAMES" :key="name" scope="col" v-text="name"></th>
+                    </tr>
+                </thead>
 
-    {% if rewards is not None %}
-    <table class="table table-sm col-12 mx-lg-3 my-3">
-        <thead>
-            <tr>
-                <th scope="col">嘉獎</th>
-                <th scope="col">小功</th>
-                <th scope="col">大功</th>
-                <th scope="col">警告</th>
-                <th scope="col">小過</th>
-                <th scope="col">大過</th>
-            </tr>
-        </thead>
+                <tbody>
+                    <tr>
+                        <td v-for="(count, index) in stats" :key="index" v-text="`${count}支`"></td>
+                    </tr>
+                </tbody>
+            </table>
 
-        <tbody>
-        <tr>
-            <td>{{ f"{stats[0]}支" }}</td>
-            <td>{{ f"{stats[1]}支" }}</td>
-            <td>{{ f"{stats[2]}支" }}</td>
-            <td>{{ f"{stats[3]}支" }}</td>
-            <td>{{ f"{stats[4]}支" }}</td>
-            <td>{{ f"{stats[5]}支" }}</td>
-        </tr>
-        </tbody>
-    </table>
+            <table class="table table-responsive-sm col-12 mx-lg-3 my-3">
+                <thead>
+                    <tr>
+                        <th scope="col">獎懲事實</th>
+                        <th scope="col">獎懲事項</th>
+                        <th scope="col">獎懲</th>
+                        <th scope="col">是否註銷</th>
+                        <th scope="col">註銷日期</th>
+                    </tr>
+                </thead>
 
-    <table class="table table-responsive-sm col-12 mx-lg-3 my-3">
-        <thead>
-            <tr>
-                <th scope="col">獎懲事實</th>
-                <th scope="col">獎懲事項</th>
-                <th scope="col">獎懲</th>
-                <th scope="col">是否註銷</th>
-                <th scope="col">註銷日期</th>
-            </tr>
-        </thead>
-
-        <tbody>
-        {% for reward in rewards %}
-            <tr>
-                <td>{{ reward["fact"] }}</td>
-                <td>{{ reward["desc"] }}</td>
-                <td>{{ get_reward_chinese_str(reward["rewards"]) }}</td>
-                {% if (cancel := reward["cancel"]) == "" %}
-                    <td></td>
-                {% else %}
-                    <td>{{ "否" if cancel == "N" else "是" }}</td>
-                {% end %}
-                <td>{{ reward["cancel_date"] }}</td>
-            </tr>
-        {% end %}
-        </tbody>
-    </table>
-    {% end %}
+                <tbody>
+                    <tr v-for="(reward, index) in rewards" :key="index">
+                        <td v-text="reward.fact"></td>
+                        <td v-text="reward.desc"></td>
+                        <td v-text="getRewardChineseStr(reward.rewards)"></td>
+                        <td v-text="getCancelStr(reward.cancel)"></td>
+                        <td v-text="reward.cancel_date"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </template>
+    </template>
 </div>

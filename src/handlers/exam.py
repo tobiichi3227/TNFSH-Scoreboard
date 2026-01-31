@@ -1,3 +1,4 @@
+import json
 import tornado.web
 
 from handlers.base import RequestHandler, reqenv, Errors
@@ -86,6 +87,18 @@ class ExamHandler(RequestHandler):
             except Exception as e:
                 import traceback
                 traceback.print_exception(e)
+
+        # Return JSON for API requests
+        if self.get_argument("format", None) == "json":
+            self.set_header("Content-Type", "application/json")
+            await self.finish(json.dumps({
+                "item_ids": item_ids,
+                "scores": scores,
+                "stats": stats,
+                "item_id": item_id,
+                "std_seme_id": std_seme_id
+            }))
+            return
 
         await self.render("exam.html", item_ids=item_ids, scores=scores, stats=stats,
                         item_id=item_id, std_seme_id=std_seme_id)

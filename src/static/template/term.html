@@ -1,161 +1,195 @@
-{% from utils.htmlgen import get_color_style_html %}
-
 <script>
     function init() {
-        document.getElementById("term_select").addEventListener('change', event => {
-            let url = '{{ base_url }}/term/?';
-            const [std_seme_id] = event.target.value.split(",");
+        const { createApp, ref, onMounted, computed } = Vue;
+        createApp({
+            setup() {
+                const item_ids = ref([]);
+                const subject_scores = ref(null);
+                const term_scores = ref(null);
+                const term_ranking = ref(null);
+                const selected_term = ref("-1");
+                const loading = ref(true);
 
-            if (std_seme_id === "-1") {
-                return;
+                const loadData = async () => {
+                    loading.value = true;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const stdSemeId = urlParams.get('stdSemeId');
+
+                    let url = `${route.base_url}/be/term?format=json&cache=${new Date().getTime()}`;
+                    if (stdSemeId) {
+                        url += `&stdSemeId=${stdSemeId}`;
+                        selected_term.value = stdSemeId;
+                    }
+
+                    try {
+                        const response = await get(url);
+                        const data = await response.json();
+                        item_ids.value = data.item_ids || [];
+                        subject_scores.value = data.subject_scores;
+                        term_scores.value = data.term_scores;
+                        term_ranking.value = data.term_ranking;
+
+                        // Set selected term if not already set
+                        if (!stdSemeId && item_ids.value.length > 0) {
+                            selected_term.value = String(data.std_seme_id);
+                        }
+                    } catch (error) {
+                        console.error('Failed to load term data:', error);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const onTermChange = (event) => {
+                    const std_seme_id = event.target.value;
+
+                    if (std_seme_id === "-1") {
+                        return;
+                    }
+
+                    let url = `${route.base_url}/term/?stdSemeId=${std_seme_id}`;
+                    route.go(url);
+                };
+
+                const getSemeName = (seme) => {
+                    return seme === 1 ? "上" : "下";
+                };
+
+                const getTermOptionText = (score_obj) => {
+                    return `${score_obj.year} ${getSemeName(score_obj.seme)}`;
+                };
+
+                const formatValue = (value) => {
+                    if (value === "") {
+                        return "尚未公布";
+                    }
+                    return value;
+                };
+
+                const getScoreColor = (score) => {
+                    if (!score || score === "") {
+                        return "";
+                    }
+                    const s = parseInt(score);
+                    if (s <= 39) {
+                        return "#dc3545";
+                    }
+                    if (s < 60) {
+                        return "#ffc107";
+                    }
+                    return "";
+                };
+
+                const getCreditColor = (score, pass) => {
+                    if (score !== "" && !pass) {
+                        return "#dc3545";
+                    }
+                    return "";
+                };
+
+                const displayExamed = computed(() => {
+                    if (!subject_scores.value) return false;
+                    return subject_scores.value.some(score => score.score_examed !== "");
+                });
+
+                const displayRetake = computed(() => {
+                    if (!subject_scores.value) return false;
+                    return subject_scores.value.some(score => score.score_retake !== "");
+                });
+
+                onMounted(() => {
+                    loadData();
+                });
+
+                return {
+                    item_ids,
+                    subject_scores,
+                    term_scores,
+                    term_ranking,
+                    selected_term,
+                    loading,
+                    onTermChange,
+                    getSemeName,
+                    getTermOptionText,
+                    formatValue,
+                    getScoreColor,
+                    getCreditColor,
+                    displayExamed,
+                    displayRetake,
+                };
             }
-
-            url += `&stdSemeId=${std_seme_id}`;
-
-            route.go(url);
-        });
+        }).mount('#term-app');
     }
-
     init();
 </script>
 
-<div class="row">
-    <select class="form-select my-3 col-12" id="term_select">
-        <option value="-1">請選擇學期</option>
-        {% for score_obj in item_ids %}
-            <option value="{{ f"{score_obj['stdSemeId']}" }}"
-                {% if std_seme_id is not None and int(std_seme_id) == score_obj['stdSemeId'] %}
-                    selected
-                {% end %}
-            >
-                {% if score_obj["seme"] == 1 %}
-                    {% set seme = "上" %}
-                {% else %}
-                    {% set seme = "下" %}
-                {% end %}
-                {{ f"{score_obj['year']} {seme}" }}
+<div id="term-app" class="row">
+    <div v-if="loading" class="text-center my-5">
+        <div class="spinner-border text-secondary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    <template v-else>
+        <select class="form-select my-3 col-12" @change="onTermChange" v-model="selected_term">
+            <option value="-1">請選擇學期</option>
+            <option v-for="score_obj in item_ids"
+                    :key="score_obj.stdSemeId"
+                    :value="String(score_obj.stdSemeId)"
+                    :text="getTermOptionText(score_obj)">
             </option>
-        {% end %}
-    </select>
+        </select>
 
+        <template v-if="subject_scores !== null">
+            <table v-if="term_scores !== null" class="table table-sm col-12 mx-lg-3">
+                <thead>
+                    <tr>
+                        <th scope="col">學業成績</th>
+                        <th scope="col">總分</th>
+                        <th scope="col">應得 / 實得 / 累計學分</th>
+                        <th scope="col">班排 / 組排 / 校排</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td v-text="term_scores.score ? Math.round(term_scores.score * 10) / 10 : '尚未公布'"></td>
+                        <td v-text="formatValue(term_scores.all_score)"></td>
+                        <td v-text="term_scores.deserved_credits ? `${term_scores.deserved_credits} / ${term_scores.observed_credits} / ${term_scores.total_observed_credits_sum}` : '尚未公布'"></td>
+                        <td v-text="term_ranking && term_ranking.class_rank ? `${term_ranking.class_rank} / ${term_ranking.group_rank} / ${term_ranking.all_rank}` : '尚未公布'"></td>
+                    </tr>
+                </tbody>
+            </table>
 
-    {% if subject_scores is not None %}
+            <table class="table table-responsive-sm col-12 mx-lg-3 my-3">
+                <thead>
+                    <tr>
+                        <th scope="col">科目</th>
+                        <th scope="col">必選修</th>
+                        <th scope="col">學分</th>
+                        <th scope="col">班排 / 組排 / 校排</th>
+                        <th scope="col">最終分數</th>
+                        <th scope="col">原始分數</th>
+                        <th v-if="displayExamed" scope="col">補考分數</th>
+                        <th v-if="displayRetake" scope="col">重修分數</th>
+                        <th scope="col">班平均</th>
+                    </tr>
+                </thead>
 
-    {% if term_scores is not None %}
-
-    <table class="table table-responsive-sm col-12 mx-lg-3">
-        <thead>
-            <tr>
-                <th scope="col">學業成績</th>
-                <th scope="col">總分</th>
-                <th scope="col">應得 / 實得 / 累計學分</th>
-                <th scope="col">班排 / 組排 / 校排</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                {% if (score := term_scores["score"]) == "" %}
-                    <td>尚未公布</td>
-                {% else %}
-                    <td>{{ round(score, 1) }}</td>
-                {% end %}
-
-                {% if (all_score := term_scores["all_score"]) == "" %}
-                    <td>尚未公布</td>
-                {% else %}
-                    <td>{{ all_score }}</td>
-                {% end %}
-
-                {% set deserved = term_scores["deserved_credits"] %}
-                {% set observed = term_scores["observed_credits"] %}
-                {% set total_observed_sum = term_scores["total_observed_credits_sum"] %}
-
-                {% if deserved == "" %}
-                    <td>尚未公布</td>
-                {% else %}
-                    <td>{{ "{} / {} / {}".format(deserved, observed, total_observed_sum) }}</td>
-                {% end %}
-
-                {% set class_rank = term_ranking["class_rank"] %}
-                {% set group_rank = term_ranking["group_rank"] %}
-                {% set all_rank = term_ranking["all_rank"] %}
-
-                {% if class_rank == "" %}
-                    <td>尚未公布</td>
-                {% else %}
-                    <td>{{ "{} / {} / {}".format(class_rank, group_rank, all_rank) }}</td>
-                {% end %}
-            </tr>
-        </tbody>
-    </table>
-
-    {% end %}
-
-    <table class="table table-sm col-12 mx-lg-3 my-3">
-        {% set display_examed = any(score["score_examed"] != "" for score in subject_scores) %}
-        {% set display_retake = any(score["score_retake"] != "" for score in subject_scores) %}
-        <thead>
-            <tr>
-                <th scope="col">科目</th>
-                <th scope="col">必選修</th>
-                <th scope="col">學分</th>
-                <th scope="col">班排 / 組排 / 校排</th>
-                <th scope="col">最終分數</th>
-                <th scope="col">原始分數</th>
-
-                {% if display_examed %}
-                    <th scope="col">補考分數</th>
-                {% end %}
-                {% if display_retake %}
-                    <th scope="col">重修分數</th>
-                {% end %}
-
-                <th scope="col">班平均</th>
-            </tr>
-        </thead>
-
-        <tbody>
-        {% for score in subject_scores %}
-            <tr>
-                <th scope="row">{{ score["subject"] }}</th>
-                {% set s = score["score"] %}
-                <td>{{ score["course_type"] }}</td>
-                <td {% if s != "" and not score["pass"] %} {{ get_color_style_html("#dc3545") }} {% end %}>
-                    {{ score["credits"] }}
-                </td>
-
-                {% set class_rank = score["class_rank"] %}
-                {% set group_rank = score["group_rank"] %}
-                {% set all_rank = score["all_rank"] %}
-                {% if class_rank == "" %}
-                    <td>尚未公布</td>
-                {% else %}
-                    <td>{{ "{} / {} / {}".format(class_rank, group_rank, all_rank) }}</td>
-                {% end %}
-
-                {% if s == "" %}
-                    <td>尚未公佈</td>
-                {% elif (39 < int(s) and int(s) < 60) %}
-                    <td {{ get_color_style_html("#ffc107") }}>{{ s }}</td>
-                {% elif int(s) <= 39 %}
-                    <td {{ get_color_style_html("#dc3545") }}>{{ s }}</td>
-                {% else %}
-                    <td>{{ s }}</td>
-                {% end %}
-
-                <td>{{ score["score_original"] }}</td>
-
-                {% if display_examed %}
-                    <td>{{ score["score_examed"] }}</td>
-                {% end %}
-                {% if display_retake %}
-                    <td>{{ score["score_retake"] }}</td>
-                {% end %}
-
-                <td>{{ score["class_average"] }}</td>
-            </tr>
-        {% end %}
-        </tbody>
-    </table>
-    {% end %}
+                <tbody>
+                    <tr v-for="score in subject_scores" :key="score.subject">
+                        <th scope="row" v-text="score.subject"></th>
+                        <td v-text="score.course_type"></td>
+                        <td :style="getCreditColor(score.score, score.pass) ? `color: ${getCreditColor(score.score, score.pass)}` : ''"
+                            v-text="score.credits"></td>
+                        <td v-text="score.class_rank ? `${score.class_rank} / ${score.group_rank} / ${score.all_rank}` : '尚未公布'"></td>
+                        <td :style="getScoreColor(score.score) ? `color: ${getScoreColor(score.score)}` : ''"
+                            v-text="formatValue(score.score)"></td>
+                        <td v-text="score.score_original"></td>
+                        <td v-if="displayExamed" v-text="score.score_examed"></td>
+                        <td v-if="displayRetake" v-text="score.score_retake"></td>
+                        <td v-text="score.class_average"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </template>
+    </template>
 </div>

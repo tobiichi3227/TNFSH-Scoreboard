@@ -1,8 +1,3 @@
-{% from utils.htmlgen import get_short_absence_reason_str, get_long_absence_reason_str %}
-{% import datetime %}
-
-{% set week_to_chinese_str = ["一", "二", "三", "四", "五", "六", "日"] %}
-
 <style>
 table.highlight {
     td:first-child, th:first-child {
@@ -26,101 +21,208 @@ table.highlight th:first-child {
 
 <script>
     function init() {
-        document.getElementById("absence_select").addEventListener('change', event => {
-            let url = '{{ base_url }}/absence/?';
-            const [year, seme] = event.target.value.split(",");
+        const { createApp, ref, onMounted, computed } = Vue;
+        createApp({
+            setup() {
+                const item_ids = ref([]);
+                const absences = ref(null);
+                const stats = ref(null);
+                const selected_semester = ref("-1,-1");
+                const loading = ref(true);
 
-            if (year === "-1" || seme === "-1") {
-                return;
+                const ABSENCE_SHORT_REASON = {
+                    "": "", "1": "曠", "2": "事", "3": "病", "4": "喪", "5": "公",
+                    "7": "遲", "E": "退", "B": "補", "C": "減", "N": "抵", "O": "空",
+                    "J": "婚", "X": "產前", "M": "娩", "K": "陪產", "Y": "流產",
+                    "Z": "育嬰", "W": "生理", "9": "其他", "F": "新冠", "A": "跨", "I": "身心"
+                };
+
+                const ABSENCE_LONG_REASON = {
+                    "1": "曠課", "2": "事假", "3": "病假", "4": "喪假", "5": "公假",
+                    "7": "遲到", "E": "早退", "K": "陪產假", "Y": "流產假", "Z": "育嬰假",
+                    "W": "生理假", "9": "其他", "F": "新冠", "I": "身心調適假"
+                };
+
+                const WEEK_TO_CHINESE = ["日", "一", "二", "三", "四", "五", "六"];
+                const TIME_SLOTS = ["早", "朝會", "一", "二", "三", "四", "午休", "五", "六", "七", "八"];
+
+                const loadData = async () => {
+                    loading.value = true;
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const year = urlParams.get('year');
+                    const seme = urlParams.get('seme');
+
+                    let url = `${route.base_url}/be/absence?format=json&cache=${new Date().getTime()}`;
+                    if (year && seme) {
+                        url += `&year=${year}&seme=${seme}`;
+                        selected_semester.value = `${year},${seme}`;
+                    }
+
+                    try {
+                        const response = await get(url);
+                        const data = await response.json();
+                        item_ids.value = data.item_ids || [];
+                        absences.value = data.absences;
+                        stats.value = data.stats;
+
+                        // Set selected semester if not already set
+                        if (!year && !seme && item_ids.value.length > 0) {
+                            selected_semester.value = `${data.year},${data.seme}`;
+                        }
+                    } catch (error) {
+                        console.error('Failed to load absence data:', error);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const onSemesterChange = (event) => {
+                    const [year, seme] = event.target.value.split(",");
+
+                    if (year === "-1" || seme === "-1") {
+                        return;
+                    }
+
+                    let url = `${route.base_url}/absence/?year=${year}&seme=${seme}`;
+                    route.go(url);
+                };
+
+                const getSemeName = (seme) => {
+                    return seme === 1 ? "上" : "下";
+                };
+
+                const getAbsenceOptionText = (score_obj) => {
+                    return `${score_obj.year} ${getSemeName(score_obj.seme)}`;
+                };
+
+                const getShortAbsenceReason = (code) => {
+                    return ABSENCE_SHORT_REASON[code] || "";
+                };
+
+                const getLongAbsenceReason = (code) => {
+                    return ABSENCE_LONG_REASON[code] || "";
+                };
+
+                const getWeekday = (dateStr) => {
+                    const parts = dateStr.split("/").map(Number);
+                    // Convert ROC (Republic of China) year to Gregorian year by adding 1911
+                    const date = new Date(parts[0] + 1911, parts[1] - 1, parts[2]);
+                    return WEEK_TO_CHINESE[date.getDay()];
+                };
+
+                const getDateParts = (dateStr) => {
+                    return dateStr.split("/").map(Number);
+                };
+
+                const statsKeys = computed(() => {
+                    if (!stats.value) return [];
+                    return Object.keys(stats.value);
+                });
+
+                const statsValues = computed(() => {
+                    if (!stats.value) return [];
+                    return Object.values(stats.value);
+                });
+
+                onMounted(() => {
+                    loadData();
+                });
+
+                return {
+                    item_ids,
+                    absences,
+                    stats,
+                    selected_semester,
+                    loading,
+                    onSemesterChange,
+                    getSemeName,
+                    getAbsenceOptionText,
+                    getShortAbsenceReason,
+                    getLongAbsenceReason,
+                    getWeekday,
+                    getDateParts,
+                    TIME_SLOTS,
+                    statsKeys,
+                    statsValues,
+                };
             }
-
-            url += `&year=${year}`;
-            url += `&seme=${seme}`;
-
-            route.go(url);
-        });
+        }).mount('#absence-app');
     }
-
     init();
 </script>
 
-<div class="row">
-    <select class="form-select my-3 col-12" id="absence_select">
-        <option value="-1,-1">請選擇學期</option>
-        {% for score_obj in item_ids %}
-            <option value="{{ f"{score_obj['year']},{score_obj['seme']}" }}"
-                {% if year is not None and seme is not None and int(year) == int(score_obj['year']) and int(seme) == int(score_obj['seme']) %}
-                    selected
-                {% end %}
-            >
-                {% if score_obj["seme"] == 1 %}
-                    {% set str_seme = "上" %}
-                {% else %}
-                    {% set str_seme = "下" %}
-                {% end %}
-                {{ f"{score_obj['year']} {str_seme} " }}
-            </option>
-        {% end %}
-    </select>
+<style>
+.date-vertical {
+  display: flex;
+  flex-direction: column;
+}
+</style>
 
-
-    {% if absences is not None %}
-
-    {% if stats is not None %}
-    <table class="table table-light table-responsive col-12 mx-lg-3 my-3">
-        <thead>
-            <tr>
-                {% for k in stats.keys() %}
-                    <th scope="col">{{ get_long_absence_reason_str(k) }}</th>
-                {% end %}
-            </tr>
-        </thead>
-
-        <tbody>
-            <tr>
-                {% for v in stats.values() %}
-                    <td>{{ v }}</td>
-                {% end %}
-            </tr>
-        </tbody>
-    </table>
-    {% end %}
-
-    <div class="table-responsive should-not-open-menu-by-swipe">
-        <table class="table table-bordered table-light table-responsive col-12 mx-lg-3 my-3 highlight">
-            <thead>
-                <tr>
-                    <th scope="col">
-                        <span>年</span>
-                        <span>月</span>
-                        <span>日</span>
-                        <span>星期</span>
-                    </th>
-                    {% for absence in absences %}
-                        {% set d = list(map(int, absence["date"].split("/"))) %}
-                        {% set weekday = datetime.date(d[0]+1911, d[1], d[2]).weekday() %}
-                        <th scope="col">
-                            <span>{{ d[0] }}</span>
-                            <span>{{ d[1] }}</span>
-                            <span>{{ d[2] }}</span>
-                            <span>{{ week_to_chinese_str[weekday] }}</span>
-                        </th>
-                    {% end %}
-                </tr>
-            </thead>
-
-            {% set ts = ["早", "朝會", "一", "二", "三", "四", "午休", "五", "六", "七", "八"] %}
-            <tbody>
-                {% for i, t in enumerate(ts) %}
-                <tr>
-                    <td>{{ t }}</td>
-                    {% for absence in absences %}
-                        <td>{{ get_short_absence_reason_str(absence["absences"][i]) }}</td>
-                    {% end %}
-                </tr>
-                {% end %}
-            </tbody>
-        </table>
+<div id="absence-app" class="row">
+    <div v-if="loading" class="text-center my-5">
+        <div class="spinner-border text-secondary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     </div>
-    {% end %}
+    <template v-else>
+        <select class="form-select my-3 col-12" @change="onSemesterChange" v-model="selected_semester">
+            <option value="-1,-1">請選擇學期</option>
+            <option v-for="score_obj in item_ids"
+                    :key="`${score_obj.year}-${score_obj.seme}`"
+                    :value="`${score_obj.year},${score_obj.seme}`"
+                    :text="getAbsenceOptionText(score_obj)">
+            </option>
+        </select>
+
+        <template v-if="absences !== null">
+            <table v-if="stats !== null" class="table table-light table-responsive col-12 mx-lg-3 my-3">
+                <thead>
+                    <tr>
+                        <th v-for="key in statsKeys" :key="key" scope="col" v-text="getLongAbsenceReason(key)"></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td v-for="(value, index) in statsValues" :key="index" v-text="value"></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="table-responsive should-not-open-menu-by-swipe">
+                <table class="table table-bordered table-light table-responsive col-12 mx-lg-3 my-3 highlight">
+                    <thead>
+                        <tr>
+                            <th scope="col">
+                                <div class="date-vertical">
+                                    <span>年</span>
+                                    <span>月</span>
+                                    <span>日</span>
+                                    <span>星期</span>
+                                </div>
+                            </th>
+                            <th v-for="absence in absences" :key="absence.date" scope="col">
+                                <div class="date-vertical">
+                                    <span
+                                    v-for="(part, index) in getDateParts(absence.date)"
+                                    :key="index"
+                                    v-text="part"
+                                    ></span>
+                                    <span v-text="getWeekday(absence.date)"></span>
+                                </div>
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="(timeSlot, index) in TIME_SLOTS" :key="index">
+                            <td v-text="timeSlot"></td>
+                            <td v-for="absence in absences" :key="`${absence.date}-${index}`"
+                                v-text="getShortAbsenceReason(absence.absences[index])"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </template>
+    </template>
 </div>

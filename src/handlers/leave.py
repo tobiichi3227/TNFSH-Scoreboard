@@ -50,6 +50,15 @@ class LeaveRequestHandler(RequestHandler):
 
             leave_forms[request['leave_request_id']].append(request)
 
+        # Return JSON for API requests
+        if self.get_argument("format", None) == "json":
+            self.set_header("Content-Type", "application/json")
+            await self.finish(json.dumps({
+                "item_ids": item_ids,
+                "leave_forms": {k: v for k, v in leave_forms.items()},
+                "std_seme_id": std_seme_id
+            }))
+            return
 
         await self.render("leave-request.html", std_seme_id=std_seme_id, item_ids=item_ids, leave_forms=leave_forms)
 

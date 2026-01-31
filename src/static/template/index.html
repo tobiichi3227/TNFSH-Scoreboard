@@ -22,9 +22,9 @@
     <title>TNFSH-Scoreboard</title>
 
     <script id="indexjs" session_id="{{ session.session_id }}" base_url="{{ base_url }}">
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('{{ base_url }}/src/sw.js');
-        }
+        // if ('serviceWorker' in navigator) {
+        //     navigator.serviceWorker.register('{{ base_url }}/src/sw.js');
+        // }
 
         document.addEventListener('DOMContentLoaded', () => {
             route.init_ui();
