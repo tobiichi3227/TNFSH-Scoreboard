@@ -61,7 +61,7 @@
                     const names = REWARD_NAMES;
                     
                     for (let i = 0; i < 6; i++) {
-                        if (rewardArr[i]) {
+                        if (rewardArr[i] > 0) {
                             res.push(`${names[i]}${rewardArr[i]}支 `);
                         }
                     }

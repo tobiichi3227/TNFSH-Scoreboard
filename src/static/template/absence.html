@@ -101,6 +101,7 @@ table.highlight th:first-child {
 
                 const getWeekday = (dateStr) => {
                     const parts = dateStr.split("/").map(Number);
+                    // Convert ROC (Republic of China) year to Gregorian year by adding 1911
                     const date = new Date(parts[0] + 1911, parts[1] - 1, parts[2]);
                     return WEEK_TO_CHINESE[date.getDay()];
                 };
