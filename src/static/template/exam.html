@@ -53,7 +53,7 @@
                             isFresh.value = false;
                             formattedCacheTime.value = metadata.formattedTime;
                             isOffline.value = !metadata.isOnline;
-                            loading.value = !metadata.isOnline; // Keep loading if online
+                            loading.value = !metadata.isOnline; // Stop loading only if offline
                         },
                         // onFreshData
                         (data) => {

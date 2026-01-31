@@ -6,6 +6,8 @@
 const CacheManager = (function() {
     const CACHE_PREFIX = 'tnfsh_cache_';
     const CACHE_TIMESTAMP_PREFIX = 'tnfsh_cache_ts_';
+    // 24 hours is used as a reasonable default for student data that changes infrequently
+    // This balances freshness with offline usability
     const CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
     /**
