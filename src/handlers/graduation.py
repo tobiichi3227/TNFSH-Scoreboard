@@ -1,3 +1,5 @@
+import json
+
 from handlers.base import RequestHandler, reqenv, Errors
 from services.api import get_all_semester_info, get_subject_term_scores
 from utils.htmlgen import get_color_style_html
@@ -67,5 +69,15 @@ class GraduationCreditsHandler(RequestHandler):
             if int(std["stdSemeId"]) > final_stdid:
                 final_stdid = std["stdSemeId"]
                 final_credit = c["total"]
+
+        # Return JSON for API requests
+        if self.get_argument("format", None) == "json":
+            self.set_header("Content-Type", "application/json")
+            await self.finish(json.dumps({
+                "credits": list(credits),
+                "final_credit": list(final_credit),
+                "student_class_number": self.session.student_class_number
+            }))
+            return
 
         await self.render("graduation-credit.html", credits=credits, final_credit=final_credit, get_credit_status_style=self.get_credit_status_style)
