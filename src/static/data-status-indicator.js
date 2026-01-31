@@ -52,7 +52,7 @@ const DataStatusIndicator = {
             default: null
         },
         error: {
-            type: Object,
+            type: [Object, String, Error, null],
             default: null
         }
     },
