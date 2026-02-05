@@ -10,6 +10,7 @@ from handlers.absence import SubjectAbsenceCountHandler, AbsenceHandler
 from handlers.graduation import GraduationCreditsHandler
 from handlers.forgetpw import ForgetPasswordHandler
 from handlers.leave import LeaveRequestHandler
+from handlers.analysis import AnalysisHandler
 
 
 def get_routers():
@@ -26,6 +27,7 @@ def get_routers():
 
         ("/be/exam", ExamHandler),
         ("/be/term", TermHandler),
+        ("/be/analysis", AnalysisHandler),
         ("/be/reward", RewardHandler),
         ("/be/absence", AbsenceHandler),
         ("/be/subjectabsence", SubjectAbsenceCountHandler),

@@ -1,0 +1,297 @@
+{% from utils.htmlgen import get_color_style_html%}
+
+{% from utils.htmlgen import get_color_style_html%}
+
+<style>
+.gray-line {
+    border:0;
+    border-top-width:2px;
+    border-top-color:#ced4da;
+    border-top-style:solid;
+    margin:0;
+    margin-top:20px;
+    margin-bottom:20px;
+}
+.chart-container {
+    position: relative;
+    height: 400px;
+    margin-bottom: 30px;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" 
+        integrity="sha384-OLBgp1GsljhM2TJ+sbHjaiH9txEUvgdDTAzHv2P24donTt6/529l+9Ua0vFImLlb" 
+        crossorigin="anonymous"></script>
+
+<script>
+    let allExams = {% raw all_exams_json %};
+    let currentChart = null;
+    let currentSubject = null;
+    let currentSortBy = 'chronological';
+    let currentRankType = 'none'; // none, class, group
+
+    function init() {
+        // Populate subject dropdown
+        const subjects = new Set();
+        allExams.forEach(exam => {
+            exam.scores.forEach(score => {
+                // Only include subjects where student participated (is_participated === "否" means no absence mark)
+                if (score.score !== "" && score.is_participated === "否") {
+                    subjects.add(score.subject);
+                }
+            });
+        });
+
+        const subjectSelect = document.getElementById("subject_select");
+        const sortedSubjects = Array.from(subjects).sort();
+        
+        sortedSubjects.forEach(subject => {
+            const option = document.createElement("option");
+            option.value = subject;
+            option.textContent = subject;
+            subjectSelect.appendChild(option);
+        });
+
+        // Event listeners
+        subjectSelect.addEventListener('change', event => {
+            currentSubject = event.target.value;
+            if (currentSubject !== "-1") {
+                updateChart();
+            }
+        });
+
+        document.getElementById("sort_select").addEventListener('change', event => {
+            currentSortBy = event.target.value;
+            if (currentSubject && currentSubject !== "-1") {
+                updateChart();
+            }
+        });
+
+        document.getElementById("rank_select").addEventListener('change', event => {
+            currentRankType = event.target.value;
+            if (currentSubject && currentSubject !== "-1") {
+                updateChart();
+            }
+        });
+    }
+
+    function updateChart() {
+        const chartData = prepareChartData(currentSubject, currentSortBy);
+        renderChart(chartData);
+    }
+
+    function prepareChartData(subject, sortBy) {
+        let data = [];
+
+        allExams.forEach(exam => {
+            const score = exam.scores.find(s => s.subject === subject);
+            // Only include exams where student participated (is_participated === "否" means no absence mark)
+            if (score && score.score !== "" && score.is_participated === "否") {
+                const semeLabel = exam.seme === 1 ? "上" : "下";
+                data.push({
+                    label: `${exam.year} ${semeLabel} ${exam.exam_name}`,
+                    score: parseFloat(score.score),
+                    classRank: score.class_rank !== "" && score.class_rank !== undefined ? parseInt(score.class_rank, 10) : null,
+                    groupRank: score.group_rank !== "" && score.group_rank !== undefined ? parseInt(score.group_rank, 10) : null,
+                    examDate: `${exam.year}-${exam.seme}`,
+                    examOrder: parseInt(exam.year, 10) * 10 + parseInt(exam.seme, 10)
+                });
+            }
+        });
+
+        // Sort data based on selected sort method
+        if (sortBy === 'score-asc') {
+            data.sort((a, b) => a.score - b.score);
+        } else if (sortBy === 'score-desc') {
+            data.sort((a, b) => b.score - a.score);
+        } else if (sortBy === 'class-rank') {
+            data = data.filter(d => d.classRank !== null);
+            data.sort((a, b) => a.classRank - b.classRank);
+        } else if (sortBy === 'group-rank') {
+            data = data.filter(d => d.groupRank !== null);
+            data.sort((a, b) => a.groupRank - b.groupRank);
+        } else {
+            // chronological - reverse order (oldest to newest)
+            data.sort((a, b) => a.examOrder - b.examOrder);
+        }
+
+        return data;
+    }
+
+    function renderChart(data) {
+        if (!currentSubject || currentSubject === "-1") {
+            return;
+        }
+        
+        const ctx = document.getElementById('growthChart');
+        
+        if (currentChart) {
+            currentChart.destroy();
+        }
+
+        const labels = data.map(d => d.label);
+        const scores = data.map(d => d.score);
+
+        const datasets = [{
+            label: '分數',
+            data: scores,
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.4,
+            yAxisID: 'y'
+        }];
+
+        // Only add ranking dataset if selected and data exists and in chronological mode
+        if (currentSortBy === 'chronological' && currentRankType !== 'none') {
+            let rankData = null;
+            let rankLabel = '';
+            let rankColor = '';
+            
+            if (currentRankType === 'class') {
+                rankData = data.map(d => d.classRank);
+                rankLabel = '班排';
+                rankColor = 'rgb(255, 99, 132)';
+            } else if (currentRankType === 'group') {
+                rankData = data.map(d => d.groupRank);
+                rankLabel = '組排';
+                rankColor = 'rgb(153, 102, 255)';
+            }
+            
+            if (rankData && rankData.some(r => r !== null)) {
+                datasets.push({
+                    label: rankLabel,
+                    data: rankData,
+                    borderColor: rankColor,
+                    backgroundColor: rankColor.replace('rgb', 'rgba').replace(')', ', 0.2)'),
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                });
+            }
+        }
+
+        const config = {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: `${currentSubject} - 成長曲線`
+                    },
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    if (context.dataset.yAxisID === 'y1') {
+                                        label += context.parsed.y + ' 名';
+                                    } else {
+                                        label += context.parsed.y + ' 分';
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: '分數'
+                        },
+                        min: 0,
+                        max: 100
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: datasets.length > 1,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: '排名'
+                        },
+                        reverse: true,
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        };
+
+        currentChart = new Chart(ctx, config);
+    }
+
+    init();
+</script>
+
+<div class="row">
+    <h3 class="my-3">成績數據分析</h3>
+    
+    <div class="col-12 col-md-6 my-2">
+        <label for="subject_select" class="form-label">選擇科目：</label>
+        <select class="form-select" id="subject_select">
+            <option value="-1">請選擇科目</option>
+        </select>
+    </div>
+
+    <div class="col-12 col-md-6 my-2">
+        <label for="sort_select" class="form-label">排序方式：</label>
+        <select class="form-select" id="sort_select">
+            <option value="chronological">時間順序</option>
+            <option value="score-asc">分數由低到高</option>
+            <option value="score-desc">分數由高到低</option>
+            <option value="class-rank">班排由前到後（1→n）</option>
+            <option value="group-rank">組排由前到後（1→n）</option>
+        </select>
+    </div>
+
+    <div class="col-12 col-md-6 my-2">
+        <label for="rank_select" class="form-label">排名顯示：</label>
+        <select class="form-select" id="rank_select">
+            <option value="none">不顯示排名</option>
+            <option value="class">班排</option>
+            <option value="group">組排</option>
+        </select>
+    </div>
+
+    <div class="col-12 my-4">
+        <div class="chart-container">
+            <canvas id="growthChart"></canvas>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="alert alert-info" role="alert">
+            <strong>使用說明：</strong>
+            <ul class="mb-0">
+                <li>選擇科目後會顯示該科目的成長曲線圖</li>
+                <li>時間順序：按考試時間順序排列</li>
+                <li>分數排序：按分數高低排列數據點</li>
+                <li>班排/組排：按排名順序排列（僅顯示有排名資料的考試）</li>
+                <li>排名顯示：選擇要在圖表中顯示的排名類型（班排或組排），因為它們的比較基準不同（僅在時間順序模式下顯示）</li>
+                <li>圖表中可查看分數趨勢和排名變化</li>
+            </ul>
+        </div>
+    </div>
+</div>
