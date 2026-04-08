@@ -1,0 +1,249 @@
+<script>
+    function init() {
+        const { createApp, ref, reactive, onMounted, useTemplateRef } = Vue;
+
+        createApp({
+            setup() {
+                const term_select = useTemplateRef('term_select');
+                const selected_term = ref('-1,-1');
+                const grade_rpt_kind = ref('0');
+                const message = ref('');
+                const has_term = ref(false);
+                const busy = reactive({
+                    apply_grade_table: false,
+                    grade_table: false,
+                    student_officer_table: false,
+                });
+
+                const show_message = (msg) => {
+                    message.value = msg;
+                    setTimeout(() => {
+                        message.value = '';
+                    }, 1800);
+                };
+
+                const parse_term = () => {
+                    const [year, seme] = selected_term.value.split(',');
+                    if (!year || !seme || year === '-1' || seme === '-1') {
+                        return null;
+                    }
+
+                    return {
+                        year: parseInt(year, 10),
+                        seme: parseInt(seme, 10),
+                    };
+                };
+
+                const get_filename_from_disposition = (disposition) => {
+                    if (!disposition) return null;
+
+                    let match = disposition.match(/filename\*?=['"]?UTF-8''([^;"']+)/i);
+                    if (match) {
+                        return decodeURIComponent(match[1]);
+                    }
+
+                    match = disposition.match(/filename=['"]?([^;"']+)['"]?/i);
+                    if (match) {
+                        return match[1];
+                    }
+
+                    return null;
+                };
+
+                const get_fallback_filename = (download_type, year, seme, rpt_kind) => {
+                    if (download_type === 'apply_grade_table') {
+                        return `申請學期成績單_${year}${seme}.pdf`;
+                    }
+                    if (download_type === 'grade_table') {
+                        return `學生成績表_rptKind${rpt_kind}_${year}${seme}.pdf`;
+                    }
+                    return `學生幹部證明_${year}${seme}.pdf`;
+                };
+
+                const normalize_err_msg = (msg) => {
+                    const mapping = {
+                        Eparam: '參數錯誤',
+                        Eremote: '校務系統忙碌中，請稍後再試',
+                        Eremoteblock: '校務系統暫時封鎖連線，請稍後再試',
+                    };
+                    return mapping[msg] || msg || '未知錯誤';
+                };
+
+                const download = async (download_type) => {
+                    const term = parse_term();
+                    if (term === null) {
+                        show_message('請先選擇學期');
+                        return;
+                    }
+
+                    const payload = {
+                        reqtype: 'download',
+                        download_type: download_type,
+                        year: term.year,
+                        seme: term.seme,
+                    };
+                    if (download_type === 'grade_table') {
+                        payload.rptKind = parseInt(grade_rpt_kind.value, 10);
+                    }
+
+                    busy[download_type] = true;
+                    try {
+                        const response = await post('{{ base_url }}/be/tabledownload', payload);
+                        const content_type = response.headers.get('Content-Type') || '';
+                        if (!response.ok || !content_type.includes('application/pdf')) {
+                            const err = normalize_err_msg(await response.text());
+                            show_message(`下載失敗: ${err}`);
+                            return;
+                        }
+
+                        const disposition = response.headers.get('Content-Disposition');
+                        const filename = get_filename_from_disposition(disposition)
+                            || get_fallback_filename(download_type, term.year, term.seme, payload.rptKind ?? '');
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    } catch (error) {
+                        show_message('下載失敗，請稍後再試');
+                    } finally {
+                        busy[download_type] = false;
+                    }
+                };
+
+                onMounted(() => {
+                    const select = term_select.value;
+                    if (select && select.options.length > 1) {
+                        has_term.value = true;
+                        selected_term.value = select.options[1].value;
+                    }
+                });
+
+                return {
+                    selected_term,
+                    grade_rpt_kind,
+                    message,
+                    has_term,
+                    busy,
+                    download,
+                };
+            }
+        }).mount('#table-app');
+    }
+    init();
+</script>
+
+<div id="table-app" class="row">
+    <div class="col-12 my-3">
+        <select ref="term_select" id="term-select" class="form-select" v-model="selected_term">
+            <option value="-1,-1">請選擇學期</option>
+            {% for score_obj in item_ids %}
+            <option value="{{ score_obj['year'] }},{{ score_obj['seme'] }}">
+                {% if score_obj["seme"] == 1 %}
+                    {% set seme = "上" %}
+                {% else %}
+                    {% set seme = "下" %}
+                {% end %}
+                {{ score_obj['year'] }} {{ seme }}
+            </option>
+            {% end %}
+        </select>
+    </div>
+
+    <div class="col-12">
+        <div class="alert alert-warning" role="alert">
+            <p>若本表格為正式用途，列印後請前往教務處請學校蓋上關防</p>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div v-show="message !== ''" id="download-message" class="alert alert-warning" role="alert">
+            <span id="download-message-text" v-text="message"></span>
+        </div>
+    </div>
+
+    <div class="accordion col-12" id="table-download-accordion">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-apply-grade-table">
+                <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse-apply-grade-table"
+                    aria-expanded="false"
+                    aria-controls="collapse-apply-grade-table"
+                >
+                    申請學期成績單
+                </button>
+            </h2>
+            <div id="collapse-apply-grade-table" class="accordion-collapse collapse" aria-labelledby="heading-apply-grade-table" data-bs-parent="#table-download-accordion">
+                <div class="accordion-body">
+                    <p class="text-muted mb-3">下載提交申請用的學期成績單 PDF。</p>
+                    <button id="btn-apply-grade-table" type="button" class="btn btn-primary" :disabled="busy.apply_grade_table || !has_term" @click="download('apply_grade_table')">
+                        <span v-if="busy.apply_grade_table" id="spinner-apply-grade-table" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Download
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-grade-table">
+                <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse-grade-table"
+                    aria-expanded="false"
+                    aria-controls="collapse-grade-table"
+                >
+                    學生成績表
+                </button>
+            </h2>
+            <div id="collapse-grade-table" class="accordion-collapse collapse" aria-labelledby="heading-grade-table" data-bs-parent="#table-download-accordion">
+                <div class="accordion-body">
+                    <div class="mb-3">
+                        <label class="form-label">報表類型</label>
+                        <select id="grade-rpt-kind" class="form-select" v-model="grade_rpt_kind">
+                            <option value="0">沒有學籍表，有重考成績與原始成績，有加權總分，有年級人數，雙頁表格</option>
+                            <option value="1">有學籍表，成績為最後成績 (即整合重考與原始成績)，沒有加權總分，有年級人數，單頁表格</option>
+                        </select>
+                    </div>
+                    <button id="btn-grade-table" type="button" class="btn btn-primary" :disabled="busy.grade_table || !has_term" @click="download('grade_table')">
+                        <span v-if="busy.grade_table" id="spinner-grade-table" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Download
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-student-officer-table">
+                <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse-student-officer-table"
+                    aria-expanded="false"
+                    aria-controls="collapse-student-officer-table"
+                >
+                    學生幹部證明
+                </button>
+            </h2>
+            <div id="collapse-student-officer-table" class="accordion-collapse collapse" aria-labelledby="heading-student-officer-table" data-bs-parent="#table-download-accordion">
+                <div class="accordion-body">
+                    <p class="text-muted mb-3">下載該學期學生幹部證明 PDF。</p>
+                    <button id="btn-student-officer-table" type="button" class="btn btn-primary" :disabled="busy.student_officer_table || !has_term" @click="download('student_officer_table')">
+                        <span v-if="busy.student_officer_table" id="spinner-student-officer-table" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

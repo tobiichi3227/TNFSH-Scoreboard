@@ -783,3 +783,67 @@ async def get_leave_request_file(session_key: str, leave_request_id: int):
         }
 
     return Errors.Success, res
+
+@timeout_handle
+async def get_semester_grade_table(session_key: str, student_id: str, year: int, seme: int, rptKind: int):
+    data = {
+        "session_key": session_key,
+        "syse": f"{year}{seme}",
+        "childId": student_id,
+        "scoType": 1,
+        "format": "pdf",
+        "rptKind": rptKind,
+        "paperSize": 1,
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/A0259R1.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.content.read()
+
+    return Errors.Success, res
+
+
+@timeout_handle
+async def get_apply_semester_grade_table(session_key: str, student_id: str, year: int, seme: int):
+    data = {
+        "session_key": session_key,
+        "syse": f"{year}{seme}",
+        "childId": student_id,
+        "opt1": 1,
+        "opt2": 2,
+        "showType": 1,
+        "showType1": 1,
+        "format": "pdf",
+        "rptKind": 1,
+        "paperSize": 1,
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/A0651R1.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.content.read()
+
+    return Errors.Success, res
+
+@timeout_handle
+async def get_student_officer_table(session_key: str, year: int, seme: int):
+    data = {
+        "session_key": session_key,
+        "syse": f"{year}{seme}",
+        "opt": 2,
+        "opt1": 1,
+        "opt2": 5,
+        "opt3": 1,
+        "sign": 1,
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/B0467R.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.content.read()
+
+    return Errors.Success, res

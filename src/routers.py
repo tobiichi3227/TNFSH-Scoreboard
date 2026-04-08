@@ -10,6 +10,7 @@ from handlers.absence import SubjectAbsenceCountHandler, AbsenceHandler
 from handlers.graduation import GraduationCreditsHandler
 from handlers.forgetpw import ForgetPasswordHandler
 from handlers.leave import LeaveRequestHandler
+from handlers.table import TableDownloadHandler
 
 
 def get_routers():
@@ -31,6 +32,7 @@ def get_routers():
         ("/be/subjectabsence", SubjectAbsenceCountHandler),
         ("/be/graduation", GraduationCreditsHandler),
         ("/be/leave", LeaveRequestHandler),
+        ("/be/tabledownload", TableDownloadHandler),
 
         (r"/src/(.*)", tornado.web.StaticFileHandler, {"path": "./static"}),
         ("/.*", IndexHandler),
