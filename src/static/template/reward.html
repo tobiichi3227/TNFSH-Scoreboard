@@ -2,17 +2,26 @@
     function init() {
         const { createApp, ref, onMounted } = Vue;
         createApp({
+            components: {
+                'data-status-indicator': DataStatusIndicator
+            },
             setup() {
                 const item_ids = ref([]);
                 const rewards = ref(null);
                 const stats = ref(null);
                 const selected_semester = ref("-1,-1");
                 const loading = ref(true);
+                const isFromCache = ref(false);
+                const isFresh = ref(false);
+                const isOffline = ref(false);
+                const formattedCacheTime = ref(null);
+                const error = ref(null);
 
                 const REWARD_NAMES = ["嘉獎", "小功", "大功", "警告", "小過", "大過"];
 
                 const loadData = async () => {
                     loading.value = true;
+                    error.value = null;
                     const urlParams = new URLSearchParams(window.location.search);
                     const year = urlParams.get('year');
                     const seme = urlParams.get('seme');
@@ -23,22 +32,49 @@
                         selected_semester.value = `${year},${seme}`;
                     }
 
-                    try {
-                        const response = await get(url);
-                        const data = await response.json();
-                        item_ids.value = data.item_ids || [];
-                        rewards.value = data.rewards;
-                        stats.value = data.stats;
-
-                        // Set selected semester if not already set
-                        if (!year && !seme && item_ids.value.length > 0) {
-                            selected_semester.value = `${data.year},${data.seme}`;
+                    await fetchWithCache(
+                        url,
+                        // onCachedData
+                        (data, metadata) => {
+                            item_ids.value = data.item_ids || [];
+                            rewards.value = data.rewards;
+                            stats.value = data.stats;
+                            if (!year && !seme && item_ids.value.length > 0) {
+                                selected_semester.value = `${data.year},${data.seme}`;
+                            }
+                            isFromCache.value = true;
+                            isFresh.value = false;
+                            formattedCacheTime.value = metadata.formattedTime;
+                            isOffline.value = !metadata.isOnline;
+                            loading.value = !metadata.isOnline;
+                        },
+                        // onFreshData
+                        (data) => {
+                            item_ids.value = data.item_ids || [];
+                            rewards.value = data.rewards;
+                            stats.value = data.stats;
+                            if (!year && !seme && item_ids.value.length > 0) {
+                                selected_semester.value = `${data.year},${data.seme}`;
+                            }
+                            isFromCache.value = false;
+                            isFresh.value = true;
+                            loading.value = false;
+                            formattedCacheTime.value = CacheManager.formatTimestamp(Date.now());
+                            isOffline.value = false;
+                            error.value = null;
+                        },
+                        // onError
+                        (err, hasCachedData) => {
+                            error.value = err;
+                            loading.value = false;
+                            isOffline.value = !CacheManager.isOnline();
+                            if (!hasCachedData) {
+                                item_ids.value = [];
+                                rewards.value = null;
+                                stats.value = null;
+                            }
                         }
-                    } catch (error) {
-                        console.error('Failed to load reward data:', error);
-                    } finally {
-                        loading.value = false;
-                    }
+                    );
                 };
 
                 const onSemesterChange = (event) => {
@@ -90,6 +126,11 @@
                     stats,
                     selected_semester,
                     loading,
+                    isFromCache,
+                    isFresh,
+                    isOffline,
+                    formattedCacheTime,
+                    error,
                     onSemesterChange,
                     getSemeName,
                     getRewardOptionText,
@@ -104,7 +145,16 @@
 </script>
 
 <div id="reward-app" class="row">
-    <div v-if="loading" class="text-center my-5">
+    <data-status-indicator
+        :loading="loading"
+        :is-from-cache="isFromCache"
+        :is-fresh="isFresh"
+        :is-offline="isOffline"
+        :formatted-cache-time="formattedCacheTime"
+        :error="error"
+    ></data-status-indicator>
+
+    <div v-if="loading && !isFromCache" class="text-center my-5">
         <div class="spinner-border text-secondary" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
