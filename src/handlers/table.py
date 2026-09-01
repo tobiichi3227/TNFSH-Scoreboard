@@ -1,5 +1,5 @@
 from handlers.base import RequestHandler, reqenv, Errors
-from services.api import get_semester_grade_table, get_apply_semester_grade_table, get_student_officer_table, get_all_semester_info
+from services.api import get_semester_grade_table, get_apply_semester_grade_table, get_student_officer_table, get_all_semester_info, get_certificate_of_enrolment_table
 
 class TableDownloadHandler(RequestHandler):
 
@@ -38,7 +38,7 @@ class TableDownloadHandler(RequestHandler):
             download_type = self.get_argument("download_type")
             seme = int(self.get_argument('seme'))
             year = int(self.get_argument('year'))
-            if download_type not in ('apply_grade_table', 'grade_table', 'student_officer_table'):
+            if download_type not in ('apply_grade_table', 'grade_table', 'student_officer_table', 'certificate_of_enrolment_table'):
                 await self.error(Errors.WrongParam)
                 return
 
@@ -62,6 +62,12 @@ class TableDownloadHandler(RequestHandler):
 
             elif download_type == 'student_officer_table':
                 err, file = await get_student_officer_table(session_id, year, seme)
+                if err != Errors.Success:
+                    await self.error(err)
+                    return
+
+            elif download_type == 'certificate_of_enrolment_table':
+                err, file = await get_certificate_of_enrolment_table(session_id, year, seme)
                 if err != Errors.Success:
                     await self.error(err)
                     return

@@ -13,6 +13,7 @@
                     apply_grade_table: false,
                     grade_table: false,
                     student_officer_table: false,
+                    certificate_of_enrolment_table: false,
                 });
 
                 const show_message = (msg) => {
@@ -51,13 +52,22 @@
                 };
 
                 const get_fallback_filename = (download_type, year, seme, rpt_kind) => {
-                    if (download_type === 'apply_grade_table') {
-                        return `申請學期成績單_${year}${seme}.pdf`;
+                    switch (download_type) {
+                        case 'apply_grade_table':
+                            return `申請學期成績單_${year}${seme}.pdf`;
+
+                        case 'grade_table':
+                            return `學生成績表_rptKind${rpt_kind}_${year}${seme}.pdf`;
+
+                        case 'student_officer_table':
+                            return `學生幹部證明_${year}${seme}.pdf`;
+
+                        case 'certificate_of_enrolment_table':
+                            return `學生在學證明_${year}${seme}.pdf`;
+
+                        default:
+                            return undefined;
                     }
-                    if (download_type === 'grade_table') {
-                        return `學生成績表_rptKind${rpt_kind}_${year}${seme}.pdf`;
-                    }
-                    return `學生幹部證明_${year}${seme}.pdf`;
                 };
 
                 const normalize_err_msg = (msg) => {
@@ -240,6 +250,30 @@
                     <p class="text-muted mb-3">下載該學期學生幹部證明 PDF。</p>
                     <button id="btn-student-officer-table" type="button" class="btn btn-primary" :disabled="busy.student_officer_table || !has_term" @click="download('student_officer_table')">
                         <span v-if="busy.student_officer_table" id="spinner-student-officer-table" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Download
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="heading-certificate-of-enrolment-table">
+                <button
+                    class="accordion-button collapsed"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapse-certificate-of-enrolment-table"
+                    aria-expanded="false"
+                    aria-controls="collapse-certificate-of-enrolment-table"
+                >
+                    學生在學證明
+                </button>
+            </h2>
+            <div id="collapse-certificate-of-enrolment-table" class="accordion-collapse collapse" aria-labelledby="heading-certificate-of-enrolment-table" data-bs-parent="#table-download-accordion">
+                <div class="accordion-body">
+                    <p class="text-muted mb-3">下載該學期學生在學證明 PDF。</p>
+                    <button id="btn-certificate-of-enrolment-table" type="button" class="btn btn-primary" :disabled="busy.certificate_of_enrolment_table || !has_term" @click="download('certificate_of_enrolment_table')">
+                        <span v-if="busy.certificate_of_enrolment_table" id="spinner-certificate-of-enrolment-table" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                         Download
                     </button>
                 </div>

@@ -847,3 +847,18 @@ async def get_student_officer_table(session_key: str, year: int, seme: int):
         res = await resp.content.read()
 
     return Errors.Success, res
+
+@timeout_handle
+async def get_certificate_of_enrolment_table(session_key: str, year: int, seme: int):
+    data = {
+        "session_key": session_key,
+        "syse": f"{year}{seme}",
+    }
+
+    async with client_session.post(f"{const.MAIN_URL}/A0265R2.action", data=data) as resp:
+        if not resp.ok:
+            return Errors.RemoteServer, None
+
+        res = await resp.content.read()
+
+    return Errors.Success, res
