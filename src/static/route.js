@@ -67,47 +67,48 @@ function run_script(script) {
 }
 
 var route = new function() {
-    this.session_id = null;
-    this.curr_url = null;
-    this.prev_url = null;
-    this.main_navbar = null;
-    this.base_url = null;
+    var that = this;
+    that.session_id = null;
+    that.curr_url = null;
+    that.prev_url = null;
+    that.main_navbar = null;
+    that.base_url = null;
 
-    this.init_ui = function() {
+    that.init_ui = function() {
         let session_id = document.getElementById("indexjs").getAttribute('session_id');
-        this.base_url = document.getElementById("indexjs").getAttribute('base_url');
-        this.main_navbar = document.getElementById('main-navbar');
+        that.base_url = document.getElementById("indexjs").getAttribute('base_url');
+        that.main_navbar = document.getElementById('main-navbar');
 
-        this.main_navbar.querySelector('.nav-link.logout').addEventListener('click', () => {
-            post(`${this.base_url}/be/login`, {
+        that.main_navbar.querySelector('.nav-link.logout').addEventListener('click', () => {
+            post(`${that.base_url}/be/login`, {
                 reqtype: 'logout',
                 session_id: session_id,
             }).then(_ => {
-                location.href = `${this.base_url}/info/`;
+                location.href = `${that.base_url}/info/`;
             });
         });
 
         if (session_id != '') {
-            this.session_id = parseInt(session_id);
-            this.main_navbar.querySelector('.nav-link.logout').style.display = 'block';
+            that.session_id = parseInt(session_id);
+            that.main_navbar.querySelector('.nav-link.logout').style.display = 'block';
         } else {
-            this.main_navbar.querySelector('.nav-link.login').style.display = 'block';
+            that.main_navbar.querySelector('.nav-link.login').style.display = 'block';
         }
     }
 
-    this.go = (url) => {
+    that.go = (url) => {
         window.history.pushState(null, document.title, url);
-        this.update(1);
+        that.update(1);
     }
 
-    this.reload = () => {
-        this.update(1);
+    that.reload = () => {
+        that.update(1);
     }
 
-    this.update = function(mode) {
+    that.update = function(mode) {
         function PoPState() {
-            this.prev_url = location.href;
-            let parts = location.href.replaceAll(location.origin, '').replaceAll(`${this.base_url}`, '').split('/');
+            that.prev_url = location.href;
+            let parts = location.href.replaceAll(location.origin, '').replaceAll(`${that.base_url}`, '').split('/');
             let page = parts[1];
             if (page === undefined || page.length === 0 || page === 'index') {
                 page = 'info';
@@ -132,7 +133,7 @@ var route = new function() {
 
             routerView.innerHTML = loading_animation_html;
 
-            let request_url = `${this.base_url}/be/${req_path}?${args}`;
+            let request_url = `${that.base_url}/be/${req_path}?${args}`;
             get(request_url).then(response => {
                 if (!response.ok) return "";
 
@@ -141,7 +142,7 @@ var route = new function() {
                 let callback = () => {
                     if (page.length !== 0) {
                         // There will only be one li.page, so we can just use querySelector to change classlist of a.
-                        // If this code throw exception, your code must have bug.
+                        // If that code throw exception, your code must have bug.
                         let node = null;
                         node = route.main_navbar.querySelector('li > a.active');
                         if (node !== null) node.classList.remove('active');
@@ -193,7 +194,7 @@ var route = new function() {
         window.addEventListener('popstate', PoPState);
 
         function onLoad() {
-            this.base_url = document.getElementById("indexjs").getAttribute('base_url');
+            that.base_url = document.getElementById("indexjs").getAttribute('base_url');
             PoPState();
             let links = document.querySelectorAll('li a[href]');
             links.forEach(link => {

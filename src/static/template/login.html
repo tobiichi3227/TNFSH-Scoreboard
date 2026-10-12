@@ -14,13 +14,8 @@
                 const password_visible = ref(false);
 
                 const login_redirect = () => {
-                    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                        location.href = "{{ base_url }}/exam/";
-                        return;
-                    }
-
                     if (route.prev_url == null) {
-                        location.href = "{{ base_url }}/info/";
+                        location.href = (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) ? "{{ base_url }}/exam/" : "{{ base_url }}/info/";
                     } else {
                         location.href = route.prev_url;
                     }
